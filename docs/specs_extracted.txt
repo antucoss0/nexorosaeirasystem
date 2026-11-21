@@ -1,0 +1,1668 @@
+===== 96957f2f-bdc6-49c5-8be8-df9b2c8817a2/WDD_y_Prompt_Maestro_-_Nexo_Rosa_EIRA_System.pdf 6
+WEB DESIGN DOCUMENT (WDD) & PROMPT MAESTRO DE INGENIERÍA
+NEXO ROSA EIRA SYSTEM
+Plataforma Unificada Local-First para Registro Clínico en Campo, Gestión Municipal, Impacto Social
+y Entrega Segura de Resultados
+Reto Ancla: Reto 1 — Expediente Digital
+Único
+Estrategia: Arquitectura Modular Unificada (4
+Frentes)
+Motor: Devin
+AI
+1. Resumen Ejecutivo y Visión de Arquitectura
+Nexo Rosa EIRA System es una plataforma web progresiva (PWA) con arquitectura Local-First
+diseñada para unificar en una sola herramienta operativa los cuatro frentes críticos de EIRA. En
+lugar de operar sistemas fragmentados en hojas de cálculo, mensajes informales y registros en
+papel que generan duplicidad clínica y retrasos logísticos, todo el ecosistema gira alrededor de un
+Expediente Digital Único de Paciente capturado desde dispositivos móviles en campo sin internet
+y gestionado desde un Panel Administrativo centralizado.
+Flujo Operativo Integrado (Ciclo Completo):
+1. Paso 1 — Preparación Institucional (Reto 2): El administrador crea la jornada municipal,
+configura y aprueba los requisitos documentales (fotografías del espacio, logotipos, persona
+enlace), genera la Carta Compromiso oficial con cláusulas fijas protegidas y activa la sede.
+2. Paso 2 — Captura en Campo Offline-First (Reto 1): El brigadista selecciona desde su celular la
+sede activa y registra pacientes y atenciones sin conexión. El motor preventivo compara múltiples
+atributos y bloquea fusiones automáticas exigiendo confirmación humana ante coincidencias
+probables.
+3. Paso 3 — Entrega Clínica Segura (Reto 4): Al sincronizarse los expedientes únicos, el
+laboratorio/administración carga los PDF de Papanicolaou, el rol médico autoriza clínicamente el
+resultado y el sistema emite un acceso temporal autenticado junto con una notificación neutra sin
+términos médicos ni diagnósticos, incluyendo alternativas asistidas.
+4. Paso 4 — Consolidación e Impacto Sin Doble Conteo (Reto 3): El tablero lee en tiempo real
+las entidades desacopladas e importa fuentes CSV/Excel heterogéneas aplicando reglas
+explícitas de calidad para diferenciar personas únicas de atenciones, estudios, servicios, entregas
+de insumos y participaciones.
+2. Sistema de Identidad Visual y Paleta Cromática
+La interfaz equilibra rigor clínico, legibilidad bajo luz solar en brigadas móviles e identidad
+institucional propia mediante alto contraste tipográfico y acentos en rosa mexicano.
+Nexo Rosa EIRA System — WDD & Prompt Maestro Page 1 of 6
+Token / Rol Visual Código Hex Aplicación en Interfaz
+Rosa Mexicano
+(Primario)
+#E4007C Botones de acción principal (Guardar, Sincronizar, Validar),
+indicadores de estado activo, isotipo y acentos estructurales.
+Magenta Vibrante
+(Hover/Foco)
+#FF1E8A Estados interactivos, resaltado de métricas clave de mujeres únicas
+y bordes de foco en formularios móviles.
+Negro Carbón
+(Estructura)
+#111111 Tipografía principal, barra lateral del Panel Admin, encabezados de
+tablas y bordes de alto contraste.
+Blanco Puro
+(Superficie)
+#FFFFFF Lienzo base para formularios de campo (legibilidad en exteriores) y
+tarjetas de expedientes clínicos.
+Gris Neutro
+(Soporte)
+#F4F4F5 Fondos secundarios, filas alternas de tablas, separadores y estados
+deshabilitados.
+3. Arquitectura Técnica y Esquema de Datos Unificado
+La aplicación opera bajo un modelo Local-First respaldado en almacenamiento persistente del
+navegador (IndexedDB / Dexie.js + localStorage) con sincronización bidireccional y resolución
+explícita de conflictos. El modelo relacional desacopla estrictamente la identidad humana de los
+eventos clínicos y documentales.
+Entidad /
+Tabla Campos Clave Reglas de Integridad y Negocio
+1.
+jornadas
+(Reto 2)
+id, municipio, sede, fecha,
+servicios_ofertados, responsables,
+requisitos[] (nombre, archivo_url, estado: pendiente |
+recibido | observado | aprobado, comentario_correccion),
+carta_versiones[], estado_jornada
+Gestiona checklist configurable,
+carga documental municipal,
+solicitud de correcciones y
+versionado inmutable de Cartas
+Compromiso con cláusulas fijas
+protegidas.
+2.
+pacientes
+(Reto 1 —
+Núcleo)
+uuid (interno estable), nombre_completo,
+nombre_normalizado, fecha_nacimiento,
+telefono, municipio, curp_opcional,
+contacto_alterno, tiene_telefono_propio,
+sync_status, conflict_flag
+Identificador estable por mujer.
+Búsqueda multi-atributo con
+confirmación humana obligatoria
+antes de vincular (prohibida la
+fusión automática).
+Nexo Rosa EIRA System — WDD & Prompt Maestro Page 2 of 6
+Entidad / Tabla Campos Clave Reglas de Integridad y Negocio
+3.
+atenciones_estudios
+(Retos 1, 3 y 4)
+id, paciente_uuid, jornada_id,
+programa, categoria_impacto (servicio |
+atencion | estudio | insumo | participacion),
+tipo_servicio, fecha, pdf_escaneado,
+estado_pap (cargado | revision_admin |
+autorizado_medico | notificado | consultado |
+entrega_asistida), token_temporal,
+pin_identidad, leido_at
+Separa visitas e insumos de
+la persona única. Controla el
+flujo administrativo y clínico
+de Papanicolaou y rastrea
+lectura o atención asistida
+en campo.
+4. audit_logs
+(Trazabilidad Global)
+id, timestamp, usuario, rol (captura |
+consulta_clinica | laboratorio | municipio | admin),
+modulo, accion, entidad_id,
+ajuste_manual
+Bitácora inmutable de
+cambios de expediente,
+decisiones humanas sobre
+duplicados, validaciones de
+Papanicolaou, correcciones
+municipales y ajustes
+manuales en reportes.
+4. Especificación Detallada por Reto y Sección
+Sección 1: Home, Control de Acceso (RBAC) y Vista Móvil Offline (Reto 1)
+Autenticación y Roles Diferenciados: Pantalla de inicio de sesión y registro rápido con perfiles
+específicos: Brigadista (Captura en Campo), Consulta Clínica / Médico, Laboratorio, Enlace
+Municipal y Administración EIRA.
+Simulación Verificable Offline y Cola de Sincronización: Interruptor visible de conectividad
+(Online / Offline), almacenamiento local inmediato, contador de registros pendientes por
+sincronizar y detector de conflictos cuando dos brigadistas editan un mismo expediente sin red.
+Reconocimiento de Paciente Recurrente con Freno Humano: Al capturar nombre, fecha de
+nacimiento, teléfono o municipio, busca coincidencias aproximadas. Si existe similitud, presenta
+ambos registros lado a lado para que el operador decida explícitamente entre vincular segunda
+visita al historial existente o crear nuevo expediente.
+Sección 2: Admin — Expedientes Únicos, Duplicados y Bitácora (Reto 1)
+Directorio Maestro y Búsqueda Multi-Atributo: Consulta rápida por ID interno estable, nombre
+normalizado, fecha de nacimiento, teléfono o municipio, mostrando el historial cronológico
+separado de servicios recibidos.
+Bandeja de Resolución de Conflictos y Auditoría: Interfaz administrativa para revisar posibles
+duplicados sincronizados desde campo y consultar la bitácora completa de quién creó, vinculó o
+modificó cada dato.
+Nexo Rosa EIRA System — WDD & Prompt Maestro Page 3 of 6
+Sección 3: Admin — Coordinación Municipal y Cartas Compromiso (Reto 2)
+Expediente por Jornada y Lista Configurable de Requisitos: Gestión de municipio, sede,
+fecha, servicios y responsables. Permite configurar requisitos (carta compromiso, fotografías del
+espacio, logotipos institucionales, persona enlace) y cambiar su estado entre pendiente, recibido,
+observado (con nota de corrección) y aprobado.
+Generador Institucional de Cartas Compromiso: Rellena únicamente los campos variables
+sobre la plantilla oficial de EIRA bloqueando la edición de cláusulas fijas, conservando historial de
+versiones y exportación lista a PDF.
+Tablero de Pendientes Críticos por Municipio: Vista general con semáforo de atrasos y
+recordatorios no invasivos para evitar retrasos previos a la brigada.
+Sección 4: Admin — Entrega Digital Segura de Papanicolaou (Reto 4)
+Carga y Doble Validación (Administrativa + Clínica): Subida del PDF escaneado de
+laboratorio, asociación verificada al paciente_uuid, revisión administrativa y autorización clínica
+obligatoria antes de habilitar el acceso.
+Acceso Autenticado Sin Enlaces Públicos Permanentes: Generación de enlace temporal con
+expiración y verificación de identidad (fecha de nacimiento o últimos 4 dígitos del teléfono) para
+descarga autenticada por la paciente.
+Notificación Neutra y Alternativas Asistidas: Envío simulado por correo/SMS con texto
+estrictamente neutro (cero mención a diagnósticos, hallazgos ni tipo de estudio clínico), monitoreo
+de estados (no leído > 48h) y flujo de entrega asistida por promotora para pacientes sin correo,
+sin teléfono propio o sin conectividad.
+Sección 5: Admin — Consolidación y Visualización de Impacto Social (Reto 3)
+Importador Multi-Fuente y Mapeo de Columnas: Carga de archivos CSV/Excel con estructuras
+heterogéneas, mapeo guiado al modelo común y diccionario de datos explícito (unidades,
+periodos, programa y fuente).
+Motor de Reglas de Calidad de Datos: Detección automática de campos faltantes, duplicados
+probables, formatos inválidos y discrepancias entre fuentes antes de consolidar.
+Indicadores Desagregados y Exportación Trazable: Separación estricta entre personas
+únicas, servicios, atenciones, estudios, entregas de insumos y participaciones, con filtros por
+programa, periodo, municipio y servicio, mostrando fecha de corte, denominador, fuente y
+bitácora de ajustes manuales al exportar.
+COBERTURA COMPLETA DE ENTREGABLES PARA DEMOSTRACIÓN EN VIVO
+Nexo Rosa EIRA System — WDD & Prompt Maestro Page 4 of 6
+Reto 1: Alta ficticia offline, detección de coincidencia con freno humano, segunda visita en
+historial y control de acceso. Reto 2: Alta de jornada, generación de carta con cláusulas fijas,
+carga ficticia, solicitud de corrección y aprobación. Reto 3: Importación de 2 fuentes sintéticas,
+mapeo, detección de anomalías, métricas separadas y exportación trazable. Reto 4: Carga de
+PDF sintético, autorización clínica, aviso neutro, acceso autenticado y panel de estados con
+opción asistida.
+5. Prompt Maestro Completo para Ejecutar en Devin
+Copia y pega este prompt íntegro en Devin para construir el sistema completo con todas las reglas
+de negocio y datos sintéticos precargados:
+Nexo Rosa EIRA System — WDD & Prompt Maestro Page 5 of 6
+Actúa como un Ingeniero de Soluciones Senior Full-Stack. Desarrolla la aplicación 
+web completa "Nexo Rosa EIRA System", una plataforma integral Local-First para la 
+ONG EIRA que unifica en una sola arquitectura de datos los 4 retos operativos: (1) 
+Expediente digital único offline-first, (2) Coordinación municipal y cartas 
+compromiso, (3) Consolidación e impacto social sin doble conteo, y (4) Entrega 
+digital segura de resultados de Papanicolaou. 1. IDENTIDAD VISUAL Y DISEÑO: - 
+Nombre: "Nexo Rosa EIRA System". - Paleta cromática estricta: Blanco puro 
+(#FFFFFF) de fondo, Negro carbón (#111111) para tipografía, sidebar admin y 
+encabezados de tabla, Gris neutro (#F4F4F5) para superficies secundarias, y Rosa 
+Mexicano (#E4007C / hover #FF1E8A) para acciones primarias, estados activos e 
+identidad visual. - Interfaz responsiva de alto contraste, bordes limpios (1px), 
+sin sombras difusas, optimizada tanto para uso en celular bajo luz solar (Vista 
+Campo) como en escritorio (Panel Admin). 2. ARQUITECTURA LOCAL-FIRST Y ESQUEMA 
+RELACIONAL UNIFICADO: - Implementa en React / Next.js + Tailwind CSS + Lucide 
+Icons con persistencia real en IndexedDB (o localStorage estructurado) precargada 
+con datos sintéticos realistas (3 municipios, 10 pacientes únicas, 18 
+atenciones/insumos y 2 archivos CSV de ejemplo listos para importar). - Esquema de 
+4 entidades interconectadas: a) `jornadas`: id, municipio, sede, fecha, servicios, 
+responsables, requisitos (lista configurable con: carta_compromiso, fotos_espacio, 
+logotipos, persona_enlace; cada uno con estado: 'pendiente' | 'recibido' | 
+'observado' | 'aprobado', archivo_simulado y nota_correccion), versiones_carta 
+(array de versiones generadas), estado_general. b) `pacientes`: uuid 
+(identificador interno estable ej. EIRA-MX-001), nombre_completo, 
+nombre_normalizado, fecha_nacimiento, telefono, municipio, curp_opcional, 
+contacto_alterno, sin_conectividad_propia (boolean), sync_status ('synced' | 
+'pending' | 'conflict'). c) `atenciones_estudios`: id, paciente_uuid, jornada_id, 
+programa, categoria ('Persona Única' | 'Servicio' | 'Atención' | 'Estudio' | 
+'Entrega de Insumos' | 'Participación'), tipo_servicio, fecha, pdf_archivo, 
+estado_pap ('Cargado' | 'Revisión Admin' | 'Autorizado Clínico' | 'Notificado' | 
+'Consultado' | 'Entrega Asistida'), token_temporal, expira_en, pin_verificacion, 
+leido_en. d) `audit_logs`: id, timestamp, usuario, rol, modulo, accion, 
+entidad_id, detalle_ajuste. 3. MÓDULOS Y REGLAS OBLIGATORIAS DE CADA SECCIÓN: - 
+MÓDULO 0: HOME, LOGIN / SIGN IN Y CONTROL DE ACCESO POR ROLES - Pantalla de inicio 
+con branding Nexo Rosa EIRA System, login/registro y selector rápido de rol para 
+demostración: [Brigadista Captura], [Consulta Clínica / Médico], [Laboratorio], 
+[Enlace Municipal] y [Administración EIRA]. Restringe acciones según el rol activo 
+(ej. solo Médico autoriza PAP; solo Admin aprueba requisitos municipales). - 
+SECCIÓN 1: VISTA MÓVIL — CAMPO OFFLINE-FIRST (RETO 1) - Barra superior con 
+interruptor verificable "Online / Offline Simulado", contador de cola pendiente de 
+sincronización y botón "Sincronizar Ahora" con detección y resolución de 
+conflictos. - Selector de jornada municipal activa y formulario móvil ágil para 
+registrar paciente y servicio/insumo recibido. - DETECCIÓN MULTI-ATRIBUTO CON 
+CONFIRMACIÓN HUMANA: Al escribir nombre, fecha de nacimiento o teléfono, busca 
+coincidencias aproximadas. Si detecta similitud, muestra una alerta comparativa 
+lado a lado y obliga al operador a elegir: "Confirmar misma paciente (Agregar 
+visita al historial)" o "Es otra persona (Crear nuevo UUID)". Nunca fusionar 
+automáticamente. - SECCIÓN 2: ADMIN — EXPEDIENTES ÚNICOS Y BITÁCORA (RETO 1) - 
+Búsqueda multi-atributo y listado de pacientes únicas con su UUID estable y conteo 
+separado de visitas. - Ficha de expediente con actualización selectiva de datos de 
+contacto e historial cronológico completo de servicios. - Bandeja de revisión de 
+coincidencias/conflictos y vista de Bitácora de Auditoría inmutable. - SECCIÓN 3: 
+ADMIN — COORDINACIÓN MUNICIPAL Y CARTAS COMPROMISO (RETO 2) - Alta y vista general 
+dejornadaspormunicipioconsemáforodependientescríticosyrecordatoriosno
+Nexo Rosa EIRA System — WDD & Prompt Maestro Page 6 of 6
+===== 6556fb77-c175-48f4-86cb-89bd389e1b8d/Formato_citología_EIRA.pdf 1
+ 
+SOLICITUD Y REPORTE DE CITOLOGÍA CERVICAL 
+ 
+ 
+ 
+ 
+ 
+ 
+1. Nombre______________________________________________________________________________________________________________________________ 
+2. Entidad de nacimiento _________________________________________________ 3. ID EIRA 
+4. Fecha de nacimiento Día______ Mes ______ Año ______ 5. Edad en años ______________________ 
+6. Residencia habitual ____________________________________________________________________________________________________________________________ 
+______________________________________________________________________________________________________Teléfono ________________________________ 
+7. Otro domicilio ________________________________________________________________________________________________________________________________ 
+8. Otro teléfono ____________________________________ 9. Correo electrónico __________________________________________________________________________ 
+10. Afiliación              1. INSABI    2. IMSS 3.ISSSTE 4. PEMEX 5. SEDENA 6. SEMAR 7. Ninguno 8. Otro     10.1 Número de afiliación _________________________________ 
+  
+Identificación de la paciente 
+          
+ 
+11. Citología               1. Primera vez en la vida   2. Primera vez después de 3 años    3. Subsecuente     4. Complementaria a resultado positivo a VPH 
+12. Situación Ginecoobstétrica                 1. Puerperio o Postaborto 2. Postmenopausia   3. Usos hormonales   4.DIU   5. Histerectomía   6. Tratamiento farmacológico 7. 
+Embarazo actual 8. Tratamiento colposcópico previo 9. Ninguno de los anteriores 
+13. Inicio de vida sexual  1. Si 2. No          13.1 Edad____años           14. Antecedentes de vacunación VPH   1.Si 2.No    14.1 Edad en años_______________________ 
+14.2 No. Dosis  1. Una 2. Dos 3. Tres 4. Completo        15. Fecha última de regla Día______ Mes______  Año______ 
+16. A la exploración se observa 1. Cuello aparentemente sano 2.Cuello anormal   3. Lesión del cuello 4. Cervicitis 5.Leucorrea  6. Sangrado anormal 7.No se observa cuello 
+17. Utensilio con el que se tomó la muestra  1. Espátula de Ayre modificada 2. Citobrush 3. Hisopo 4. Otro especifique _________________________________________ 
+18. Cédula profesional del responsable de la toma de citología __________________________________________________________________________________________ 
+19. Fecha de la toma de muestra   Día______ Mes______  Año______ 
+20. Factores de riesgo    1. Inicio de relaciones sexuales antes de los 18 años 2. Múltiples parejas sexuales 3.Antecedentes de infecciones de transmisión sexual 
+4. Tabaquismo 5. Ninguno 
+21. Cuenta con Cartilla Eira   1. Si 2.No 
+22. Muestra repetida  1.Si  2.No       22.1 Número citológico anterior __________________________________________________________________________________ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+Antecedentes 
+Resultado de citología 
+23.  Fecha de interpretación Día______ Mes ______ Año ______    24.  Número citológico __________________________ 25. Laboratorio ____________________________ 
+26. Características de la muestra  1. Adecuada 2. Inadecuada  
+27. Diagnóstico citológico                                                                                            27.1 Otros hallazgos  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+28. Repetir estudio  1. Si  2. No  28.1 Motivo   
+29. Cédula profesional del citotecnólogo (a) ________________________________________________________________________________________ 
+30. La muestra fue revisada por un patólogo (a) 1.Si 2.No 30.1 Diagnóstico del patólogo(a)( De acuerdo a la nomenclatura del reactivo 33A) ______________________ 
+30.2 Diagnóstico del patológo(a) otros hallazgos (De acuerdo a la nomenclatura del reactivo 33B)______________________________________________________________ 
+31. Cédula profesional del patólogo (a) _____________________________________________________________________________________________________________ 
+  
+  
+  
+ 7. Células glandulares endocervicales atípicas (AGC) 
+8.  Células glandulares endometriales atípicas (AGC) 
+9.  Células glandulares atípicas (AGC) 
+10.  Adenocarcinoma endocervical in situ 
+11.  Adenocarcinoma (endocervical, endometrial o 
+extrauterino) 
+  
+  
+  
+A.Categoría del diagnóstico citológico  (BETHESDA) 
+1. Negativa para lesión intraepitelial o malignidad  
+2. Células escamosas atípicas de significado indeterminado (ASC-US) 
+3. Células escamosas atípicas, no se puede descartar lesión intraepitelial 
+escamosa de alto grado (ASC-H) 
+4. Lesión escamosa intraepitelial de bajo grado (VPH, displasia leve, NIC 
+1) 
+5. Lesión escamosa intraepitelial de alto grado (displasia moderada, 
+displasia severa, carcicoma in Situ, NIC 2, NIC 3) 
+6. Carcinoma epidermoide 
+B.Otro hallazgo 
+1. Trichonomas vaginalis 
+2. Microorganismos micóticos morfológicamente compatibles con 
+cándida sp 
+3. Cambio en la flora sugestiva de vaginosis bacteriana 
+4. Microorganismos morfológicamente compatibles con actinomices sp 
+5. Cambios celulares compatibles con virus de herpes simple 
+6. Cambios celulares compatibles con citomegalovirus 
+7. Metaplasia escamosa tubula o cambios queratolíticos 
+ 
+ 
+7. Células glandulares endocervicales atípicas (AGC) 
+8.  Células glandulares endometriales atípicas (AGC) 
+9.  Células glandulares atípicas (AGC) 
+10.  Adenocarcinoma endocervical in situ 
+11.  Adenocarcinoma (endocervical, endometrial o 
+extrauterino) 
+8. Cambios asociados al embarazo 
+9.Inflamación (incluye reparación atípica) 
+10. Atrofia 
+11. Radioterapia 
+12. Dispositivo intrauterino 
+13. Células glandulares post- histerectomía 
+14. Presencia de células endometriales no atípicas en 
+mujeres de 45 o más 
+ 
+1. Artificios, hemorragia, 
+inflamación y/o necrosis en 
+más del 75% extendido 
+2. Laminilla rota 
+4. Muestra mal fijada 
+3. Frotis grueso 
+5. Otros.  
+Especifique _______ 
+ 
+ 
+No. de folio: 
+Federico del Toro 83 int 205, Centro, Ciudad Guzmán Jalisco, C.P. 49000. Tel. 3414108111 y 3411596782. hola@eiraac.org 
+===== d5b5cd65-0464-4bcf-b4aa-c165f063308d/Definición_de_retos.pdf 4
+Reto
+ 
+1.
+ 
+Expediente
+ 
+digital
+ 
+único
+ 
+y
+ 
+registro
+ 
+de
+ 
+pacientes
+ 
+Diseñar
+ 
+un
+ 
+mecanismo
+ 
+de
+ 
+registro
+ 
+y
+ 
+consulta
+ 
+que
+ 
+permita
+ 
+reconocer
+ 
+a
+ 
+una
+ 
+paciente
+ 
+recurrente,
+ 
+conservar
+ 
+su
+ 
+historial
+ 
+de
+ 
+servicios
+ 
+y
+ 
+actualizar
+ 
+solo
+ 
+la
+ 
+información
+ 
+necesaria,
+ 
+aun
+ 
+con
+ 
+conectividad
+ 
+intermitente.
+ 
+Hoy
+ 
+las
+ 
+pacientes
+ 
+se
+ 
+identifican
+ 
+por
+ 
+nombre
+ 
+completo
+ 
+y
+ 
+una
+ 
+mujer
+ 
+que
+ 
+acude
+ 
+cuatro
+ 
+veces
+ 
+en
+ 
+un
+ 
+año
+ 
+puede
+ 
+registrarse
+ 
+cuatro
+ 
+veces.
+ 
+●
+ 
+Identificador
+ 
+interno
+ 
+estable
+ 
+por
+ 
+paciente;
+ 
+visitas
+ 
+y
+ 
+servicios
+ 
+registrados
+ 
+por
+ 
+separado.
+ 
+●
+ 
+Búsqueda
+ 
+de
+ 
+coincidencias
+ 
+por
+ 
+varios
+ 
+atributos,
+ 
+con
+ 
+confirmación
+ 
+humana
+ 
+antes
+ 
+de
+ 
+vincular
+ 
+expedientes
+ 
+(nunca
+ 
+fusionar
+ 
+automáticamente).
+ 
+●
+ 
+Captura
+ 
+local
+ 
+sin
+ 
+internet
+ 
+y
+ 
+sincronización
+ 
+segura
+ 
+con
+ 
+detección
+ 
+de
+ 
+conflictos.
+ 
+●
+ 
+Roles
+ 
+de
+ 
+captura,
+ 
+consulta
+ 
+clínica
+ 
+y
+ 
+administración;
+ 
+bitácora
+ 
+de
+ 
+cambios.
+ 
+Lo
+ 
+que
+ 
+puede
+ 
+demostrar
+ 
+un
+ 
+prototipo
+ 
+en
+ 
+un
+ 
+día:
+ 
+alta
+ 
+de
+ 
+una
+ 
+paciente
+ 
+ficticia,
+ 
+búsqueda
+ 
+y
+ 
+detección
+ 
+de
+ 
+coincidencia,
+ 
+segunda
+ 
+visita
+ 
+con
+ 
+historial,
+ 
+simulación
+ 
+verificable
+ 
+de
+ 
+trabajo
+ 
+sin
+ 
+conexión
+ 
+y
+ 
+explicación
+ 
+del
+ 
+control
+ 
+de
+ 
+acceso.
+ 
+ 
+ 
+ 
+Reto
+ 
+2.
+ 
+Coordinación
+ 
+institucional,
+ 
+cartas
+ 
+compromiso
+ 
+y
+ 
+documentación
+ 
+Crear
+ 
+un
+ 
+espacio
+ 
+de
+ 
+colaboración
+ 
+entre
+ 
+EIRA
+ 
+y
+ 
+las
+ 
+personas
+ 
+coordinadoras
+ 
+de
+ 
+gobiernos
+ 
+municipales
+ 
+para
+ 
+preparar
+ 
+jornadas,
+ 
+reunir
+ 
+requisitos
+ 
+(carta
+ 
+compromiso,
+ 
+fotografías
+ 
+del
+ 
+espacio,
+ 
+logotipos,
+ 
+persona
+ 
+enlace),
+ 
+generar
+ 
+cartas
+ 
+desde
+ 
+la
+ 
+plantilla
+ 
+institucional
+ 
+y
+ 
+controlar
+ 
+confirmaciones
+ 
+y
+ 
+correcciones.
+ 
+Hoy
+ 
+todo
+ 
+se
+ 
+sigue
+ 
+a
+ 
+mano
+ 
+en
+ 
+Excel
+ 
+o
+ 
+Google
+ 
+Sheets
+ 
+y
+ 
+el
+ 
+principal
+ 
+problema
+ 
+son
+ 
+los
+ 
+retrasos.
+ 
+●
+ 
+Expediente
+ 
+por
+ 
+jornada
+ 
+con
+ 
+municipio,
+ 
+sede,
+ 
+fecha,
+ 
+servicios
+ 
+y
+ 
+responsables.
+ 
+●
+ 
+Lista
+ 
+de
+ 
+requisitos
+ 
+configurable;
+ 
+el
+ 
+municipio
+ 
+carga
+ 
+documentos
+ 
+y
+ 
+ve
+ 
+su
+ 
+estado
+ 
+(pendiente,
+ 
+recibido,
+ 
+observado,
+ 
+aprobado).
+ 
+●
+ 
+Generación
+ 
+de
+ 
+cartas
+ 
+desde
+ 
+la
+ 
+plantilla
+ 
+de
+ 
+EIRA,
+ 
+con
+ 
+campos
+ 
+variables
+ 
+y
+ 
+sin
+ 
+modificar
+ 
+cláusulas
+ 
+fijas;
+ 
+versiones
+ 
+y
+ 
+trazabilidad.
+ 
+●
+ 
+Vista
+ 
+general
+ 
+de
+ 
+jornadas
+ 
+y
+ 
+pendientes
+ 
+críticos;
+ 
+recordatorios
+ 
+no
+ 
+invasivos.
+ 
+Lo
+ 
+que
+ 
+puede
+ 
+demostrar
+ 
+un
+ 
+prototipo
+ 
+en
+ 
+un
+ 
+día:
+ 
+crear
+ 
+una
+ 
+jornada,
+ 
+generar
+ 
+una
+ 
+carta
+ 
+desde
+ 
+una
+ 
+plantilla
+ 
+de
+ 
+ejemplo,
+ 
+subir
+ 
+un
+ 
+archivo
+ 
+ficticio,
+ 
+solicitar
+ 
+una
+ 
+corrección,
+ 
+aprobar
+ 
+un
+ 
+requisito
+ 
+y
+ 
+visualizar
+ 
+pendientes
+ 
+por
+ 
+municipio.
+ 
+ 
+ 
+ 
+Reto
+ 
+3.
+ 
+Consolidación
+ 
+y
+ 
+visualización
+ 
+del
+ 
+impacto
+ 
+social
+ 
+Construir
+ 
+una
+ 
+herramienta
+ 
+que
+ 
+reúna
+ 
+datos
+ 
+de
+ 
+diferentes
+ 
+programas
+ 
+y
+ 
+fuentes,
+ 
+facilite
+ 
+su
+ 
+validación
+ 
+y
+ 
+permita
+ 
+a
+ 
+dirección
+ 
+y
+ 
+coordinaciones
+ 
+producir
+ 
+indicadores
+ 
+e
+ 
+informes
+ 
+confiables.
+ 
+Hoy
+ 
+cada
+ 
+programa
+ 
+usa
+ 
+plataformas
+ 
+distintas
+ 
+y,
+ 
+al
+ 
+preparar
+ 
+informes
+ 
+para
+ 
+aliados
+ 
+y
+ 
+donantes,
+ 
+el
+ 
+equipo
+ 
+consolida
+ 
+archivos
+ 
+a
+ 
+mano,
+ 
+con
+ 
+riesgo
+ 
+de
+ 
+doble
+ 
+conteo.
+ 
+●
+ 
+Importar
+ 
+CSV/
+Excel
+ 
+con
+ 
+columnas
+ 
+heterogéneas
+ 
+y
+ 
+mapearlas
+ 
+a
+ 
+un
+ 
+modelo
+ 
+común;
+ 
+diccionario
+ 
+de
+ 
+datos
+ 
+con
+ 
+unidades,
+ 
+periodos,
+ 
+programa
+ 
+y
+ 
+fuente.
+ 
+●
+ 
+Reglas
+ 
+explícitas
+ 
+de
+ 
+calidad:
+ 
+faltantes,
+ 
+duplicados
+ 
+probables,
+ 
+formatos
+ 
+inválidos,
+ 
+discrepancias.
+ 
+●
+ 
+Separar
+ 
+personas
+ 
+únicas,
+ 
+servicios,
+ 
+atenciones,
+ 
+estudios,
+ 
+entregas
+ 
+de
+ 
+insumos
+ 
+y
+ 
+participaciones.
+ 
+●
+ 
+Filtros
+ 
+por
+ 
+programa,
+ 
+periodo,
+ 
+municipio
+ 
+y
+ 
+tipo
+ 
+de
+ 
+servicio;
+ 
+indicadores
+ 
+con
+ 
+fecha
+ 
+de
+ 
+corte,
+ 
+denominador
+ 
+y
+ 
+fuente;
+ 
+exportación
+ 
+con
+ 
+trazabilidad
+ 
+de
+ 
+ajustes
+ 
+manuales.
+ 
+Lo
+ 
+que
+ 
+puede
+ 
+demostrar
+ 
+un
+ 
+prototipo
+ 
+en
+ 
+un
+ 
+día:
+ 
+importación
+ 
+de
+ 
+dos
+ 
+fuentes
+ 
+sintéticas,
+ 
+mapeo
+ 
+de
+ 
+campos,
+ 
+detección
+ 
+de
+ 
+anomalías,
+ 
+visualización
+ 
+de
+ 
+indicadores
+ 
+diferenciados
+ 
+y
+ 
+exportación
+ 
+de
+ 
+un
+ 
+informe
+ 
+de
+ 
+muestra.
+ 
+ 
+ 
+ 
+Reto
+ 
+4.
+ 
+Entrega
+ 
+digital
+ 
+segura
+ 
+de
+ 
+resultados
+ 
+de
+ 
+Papanicolaou
+ 
+Diseñar
+ 
+una
+ 
+alternativa
+ 
+a
+ 
+WhatsApp
+ 
+para
+ 
+gestionar,
+ 
+revisar,
+ 
+notificar
+ 
+y
+ 
+entregar
+ 
+resultados
+ 
+de
+ 
+Papanicolaou
+ 
+a
+ 
+cada
+ 
+paciente,
+ 
+con
+ 
+seguridad,
+ 
+continuidad
+ 
+y
+ 
+seguimiento
+ 
+documentado.
+ 
+Hoy
+ 
+el
+ 
+laboratorio
+ 
+entrega
+ 
+resultados
+ 
+impresos,
+ 
+EIRA
+ 
+los
+ 
+escanea,
+ 
+los
+ 
+asocia
+ 
+por
+ 
+nombre
+ 
+y
+ 
+los
+ 
+envía
+ 
+por
+ 
+WhatsApp
+ 
+(más
+ 
+de
+ 
+300
+ 
+por
+ 
+mes);
+ 
+cuando
+ 
+la
+ 
+cuenta
+ 
+se
+ 
+bloquea,
+ 
+las
+ 
+entregas
+ 
+se
+ 
+interrumpen.
+ 
+●
+ 
+Cargar
+ 
+un
+ 
+PDF
+ 
+escaneado
+ 
+y
+ 
+asociarlo
+ 
+a
+ 
+un
+ 
+expediente
+ 
+con
+ 
+comprobación
+ 
+de
+ 
+identidad.
+ 
+●
+ 
+Flujo
+ 
+de
+ 
+revisión
+ 
+administrativa
+ 
+y
+ 
+autorización
+ 
+clínica
+ 
+antes
+ 
+de
+ 
+poner
+ 
+el
+ 
+resultado
+ 
+a
+ 
+disposición.
+ 
+●
+ 
+Acceso
+ 
+seguro
+ 
+y
+ 
+diferenciado
+ 
+para
+ 
+personal
+ 
+de
+ 
+EIRA,
+ 
+laboratorio,
+ 
+médicos
+ 
+y
+ 
+pacientes;
+ 
+consulta
+ 
+y
+ 
+descarga
+ 
+autenticada,
+ 
+sin
+ 
+enlaces
+ 
+públicos
+ 
+permanentes.
+ 
+●
+ 
+Notificación
+ 
+por
+ 
+correo
+ 
+o
+ 
+SMS
+ 
+de
+ 
+que
+ 
+un
+ 
+documento
+ 
+está
+ 
+disponible,
+ 
+sin
+ 
+incluir
+ 
+diagnósticos
+ 
+ni
+ 
+hallazgos;
+ 
+estados
+ 
+del
+ 
+proceso
+ 
+y
+ 
+registro
+ 
+de
+ 
+acciones;
+ 
+alternativas
+ 
+asistidas
+ 
+para
+ 
+pacientes
+ 
+sin
+ 
+correo,
+ 
+teléfono
+ 
+propio
+ 
+o
+ 
+conectividad.
+ 
+Lo
+ 
+que
+ 
+puede
+ 
+demostrar
+ 
+un
+ 
+prototipo
+ 
+en
+ 
+un
+ 
+día:
+ 
+carga
+ 
+de
+ 
+un
+ 
+PDF
+ 
+sintético,
+ 
+asociación
+ 
+con
+ 
+una
+ 
+paciente
+ 
+ficticia,
+ 
+revisión
+ 
+y
+ 
+autorización,
+ 
+aviso
+ 
+simulado,
+ 
+acceso
+ 
+autenticado
+ 
+y
+ 
+panel
+ 
+de
+ 
+estados.
+ 
+ 

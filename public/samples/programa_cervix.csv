@@ -1,0 +1,21 @@
+paciente,fecha_nac,telefono_contacto,municipio_atencion,estudio,fecha_estudio,afiliacion
+Ana Isabela Garcia,12/03/1983,,Tuxpan,Papanicolaou,15/06/2026,
+Rosa Elena Pérez,12/03/1984,3411234504,Gómez Farías,Papanicolaou,15/06/2026,Sin afiliación
+Carmen Díaz,12/03/1985,3411234505,Zapotlán el Grande,Papanicolaou,15/06/2026,Sin afiliación
+Lucía Hernández,31/13/1985,3411234506,Tuxpan,Papanicolaou,15/06/2026,Sin afiliación
+Patricia Torres,12/03/1987,3411234507,Gómez Farías,Papanicolaou,15/06/2026,
+Sofía Ramírez,12/03/1988,3411234508,Zapotlán el Grande,Papanicolaou,15/06/2026,Sin afiliación
+Elena Mendoza,12/03/1989,,Tuxpan,Papanicolaou,15/06/2026,Sin afiliación
+María Guadalupe López,12/03/1980,3411234500,Gómez Farías,Papanicolaou,15/06/2026,Sin afiliación
+Maria Guadalupe Lopez Ruiz,12/03/1981,3411234501,Zapotlán el Grande,Papanicolaou,15/06/2026,
+Ana Isabel García,12/03/1982,3411234502,Tuxpan,Papanicolaou,15/06/2026,Sin afiliación
+Ana Isabela Garcia,,3411234503,Gómez Farías,Papanicolaou,15/06/2026,Sin afiliación
+Rosa Elena Pérez,12/03/1984,3411234504,Zapotlán el Grande,Papanicolaou,15/06/2026,Sin afiliación
+Carmen Díaz,12/03/1985,,Tuxpan,Papanicolaou,2026-02-30,
+Lucía Hernández,12/03/1986,3411234506,Gómez Farías,Papanicolaou,15/06/2026,Sin afiliación
+Patricia Torres,12/03/1987,3411234507,Zapotlán el Grande,Papanicolaou,15/06/2026,Sin afiliación
+Sofía Ramírez,12/03/1988,3411234508,Tuxpan,Papanicolaou,15/06/2026,Sin afiliación
+Elena Mendoza,12/03/1989,3411234509,Gómez Farías,Papanicolaou,15/06/2026,
+María Guadalupe López,12/03/1980,3411234500,Zapotlán el Grande,Papanicolaou,15/06/2026,Sin afiliación
+Maria Guadalupe Lopez Ruiz,12/03/1981,,Tuxpan,Papanicolaou,15/06/2026,Sin afiliación
+Ana Isabel García,12/03/1982,3411234502,Gómez Farías,Papanicolaou,15/06/2026,Sin afiliación
