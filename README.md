@@ -4,6 +4,63 @@ Plataforma local-first de cuidado y coordinación comunitaria. Interfaz en espa�
 
 Licencia [MIT](LICENSE). Copyright © 2026 EIRA Movimiento Rosa A.C. y colaboradores.
 
+## Entrega · Vibeathon Nerdearla México 2026
+
+**Reto elegido: Reto 1, expediente digital único y registro de pacientes.** Los módulos de jornadas, impacto y resultados PAP se incluyen porque leen y escriben sobre ese mismo expediente, pero el flujo que se evalúa es el del expediente.
+
+### Caso de uso de inicio a fin (5 minutos)
+
+1. Entra en `/login` como **Brigadista** y abre **Campo**.
+2. Activa **Offline simulado** y registra una paciente ficticia con una atención. El contador de operaciones pendientes sube.
+3. Escribe un nombre parecido a uno existente, por ejemplo `Maria Guadalupe Lopes`. Aparece la comparación lado a lado; el sistema no vincula nada hasta que eliges "es la misma persona" o "son personas distintas".
+4. Registra una segunda visita sobre el expediente existente y revisa su historial.
+5. Desactiva el modo offline y pulsa **Sincronizar ahora**. El servidor asigna el identificador `EIRA-MX-###`.
+6. Entra como **Administración**: **Expedientes** (visitas, atenciones y estudios separados), **Conflictos** (ediciones simultáneas del mismo campo) y **Bitácora** (quién cambió qué, exportable a CSV).
+7. Control de acceso: con la sesión de Brigadista, `/admin/bitacora` muestra "Acceso restringido" y las APIs de administración (`/api/admin/*`) responden 403.
+
+`npm test` y `scripts/phase2-check.mjs` reproducen este flujo de forma automática.
+
+### Implementado y simulado
+
+| Capacidad | Estado |
+| --- | --- |
+| Identificador estable por paciente; visitas, atenciones y estudios separados | Implementado |
+| Coincidencias por nombre, fecha de nacimiento, teléfono, municipio y CURP, con confirmación humana | Implementado |
+| Captura local en IndexedDB, cola de operaciones y sincronización con detección de conflictos por campo | Implementado |
+| Roles validados en servidor y bitácora que no admite edición ni borrado | Implementado |
+| Formatos de revisión mamaria y citología cervical | Implementado |
+| Exportación en formatos abiertos (CSV, XLSX, PDF) | Implementado |
+| Pérdida de conexión | Simulada con un interruptor; no se probó en celulares con mala señal |
+| Avisos por correo o SMS | Simulados; no se envía nada |
+| Pacientes, municipios y archivos | Sintéticos |
+| Cifrado en reposo de base de datos, archivos y datos del dispositivo | No implementado |
+| Alta de usuarios, recuperación de contraseña y 2FA | No implementado; solo existen los cinco usuarios demo |
+
+### Decisiones de diseño
+
+- **Local primero:** la escritura ocurre en el dispositivo y después en red, porque las jornadas suelen no tener internet.
+- **Nunca fusionar sola:** un falso positivo mezclaría historias clínicas de dos mujeres; el costo de preguntar es menor.
+- **Un solo proceso y SQLite:** sin servicios externos ni licencias de pago, para que una organización pequeña pueda operarlo y respaldarlo copiando una carpeta.
+- **Dependencias:** todas de código abierto (Next.js, React, better-sqlite3, Dexie, jose, bcrypt, pdf-lib, ExcelJS, Recharts).
+
+### Riesgos y necesidades para un piloto real
+
+- **Seguridad y privacidad:** cifrado en reposo y en el dispositivo, HTTPS propio, 2FA para perfiles clínicos y de administración, límite de intentos, aviso de privacidad y consentimiento conforme a la LFPDPPP, política de retención y revisión de seguridad externa.
+- **Operación:** una persona de EIRA que administre usuarios y resuelva conflictos, capacitación breve para brigadistas, respaldos automáticos probados y monitoreo de errores.
+- **Datos:** migrar los registros históricos de Excel y Google Forms generará muchos duplicados probables que alguien debe revisar.
+- **Dispositivos:** un celular perdido contiene datos locales; hace falta bloqueo y borrado remoto o cifrado local.
+- **Costos recurrentes:** hospedaje con disco persistente o base de datos gestionada, dominio, y proveedor de SMS o correo si se activan avisos reales. No hay licencias de software.
+- **Próximos pasos:** PostgreSQL gestionado, cuentas reales, PWA instalable con service worker en hosting propio, pruebas en campo con conexión real y piloto en una jornada.
+
+### Preguntas abiertas y supuestos por validar con EIRA
+
+- ¿Qué datos se piden siempre en campo (CURP, teléfono, fecha de nacimiento)? Se asumió que la CURP no siempre está disponible.
+- ¿Quién puede confirmar que dos registros son la misma persona: la brigadista o solo administración?
+- ¿Los dispositivos son de EIRA o personales, y se comparten entre brigadistas?
+- ¿Cuánto tiempo se conserva un expediente y quién puede darlo de baja?
+- ¿Los formatos de revisión mamaria y citología digitalizados reflejan la versión vigente?
+- ¿Qué volumen por jornada y cuántos días sin conexión hay que soportar?
+
 ## Inicio local
 
 Requiere Node.js 20 LTS y npm. En esta máquina: `source ~/.nvm/nvm.sh && nvm use 20`.
@@ -39,7 +96,7 @@ Contraseña común: **eira2026**. El inicio permite email/contraseña o botones 
 
 ## Arquitectura
 
-- Next.js 15 App Router, React 19, TypeScript, Tailwind, lucide-react y Montserrat. Diseño de alto contraste, rosa mexicano, bordes de 1 px, sin sombras difusas. Campo adapta navegación y formularios a móvil.
+- Next.js 15 App Router, React 19, TypeScript, Tailwind, lucide-react y Montserrat. Tema oscuro tipo vidrio con acentos en rosa mexicano; en móvil la navegación pasa a una barra inferior.
 - `lib/db.ts`: SQLite (`better-sqlite3`) en `data/nexo.db`, WAL y transacciones. Usuarios con bcrypt, pacientes, atenciones, jornadas, conflictos, historial por versión, operaciones aplicadas, archivos y bitácora. Los campos de dominio están en JSON; identificadores, versiones, autor y fecha son columnas; las atenciones tienen FK real a pacientes.
 - `lib/auth.ts`: JWT HS256 de 12 horas (`jose`), cookie httpOnly SameSite=Lax. Una clave aleatoria persistida en SQLite firma las sesiones si no se configura `SESSION_SECRET`. `COOKIE_SECURE=true` para HTTPS. Middleware redirige sin cookie y el layout servidor valida firma y usuario; cada API verifica sesión y permisos independientemente.
 - `lib/rbac.ts`: permisos centrales. Brigadista captura; médico autoriza PAP; laboratorio carga PDF; solo admin aprueba requisitos. Municipio recibe únicamente jornadas de su municipio y no puede cambiar municipio, cartas, estado general ni aprobaciones. No existe una API pública que edite usuarios o auditoría.
