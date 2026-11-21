@@ -1,4 +1,28 @@
-const CACHE = "eira-shell-v2";
+const CACHE = "eira-shell-v3";
+// Public pages are stored with everything they need so they open without a network.
+const PUBLIC = ["/", "/presentacion", "/login", "/guia"];
+async function precache(cache) {
+  await Promise.all(
+    PUBLIC.map(async (path) => {
+      try {
+        const res = await fetch(path, { credentials: "omit" });
+        if (!res.ok || res.redirected) return;
+        const html = await res.clone().text();
+        await cache.put(path, res);
+        const assets = new Set(html.match(/\/_next\/static\/[^"'\\\s)]+/g) || []);
+        await Promise.all(
+          [...assets].map(async (asset) => {
+            try {
+              if (await cache.match(asset)) return;
+              const file = await fetch(asset);
+              if (file.ok) await cache.put(asset, file);
+            } catch {}
+          }),
+        );
+      } catch {}
+    }),
+  );
+}
 const cacheable = (path) =>
   ["/campo", "/admin/jornadas"].includes(path) ||
   /^\/admin\/pacientes(?:\/[^/]+(?:\/estudio\/[^/]+)?)?$/.test(path);
@@ -7,7 +31,9 @@ self.addEventListener("install", (event) => {
     caches
       .open(CACHE)
       .then((c) =>
-        c.addAll(["/offline.html", "/icon.svg", "/manifest.webmanifest"]),
+        c
+          .addAll(["/offline.html", "/icon.svg", "/manifest.webmanifest"])
+          .then(() => precache(c)),
       ),
   );
   self.skipWaiting();
@@ -53,7 +79,11 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       const cache = await caches.open(CACHE);
       const mode = await cache.match("/__mode");
-      if (mode && (await mode.text()) === "true")
+      if (
+        mode &&
+        (await mode.text()) === "true" &&
+        !(event.request.mode === "navigate" && PUBLIC.includes(url.pathname))
+      )
         return (
           (await cache.match(event.request)) ||
           (await cache.match(url.pathname)) ||
@@ -97,12 +127,15 @@ async function handle(event, cache, url) {
   if (event.request.mode === "navigate") {
     try {
       const res = await fetch(event.request);
-      if (res.ok && !res.redirected && cacheable(url.pathname))
+      if (res.ok && !res.redirected && PUBLIC.includes(url.pathname))
+        await cache.put(url.pathname, res.clone());
+      else if (res.ok && !res.redirected && cacheable(url.pathname))
         await cache.put(event.request, res.clone());
       return res;
     } catch {
       return (
         (await cache.match(event.request)) ||
+        (PUBLIC.includes(url.pathname) && (await cache.match(url.pathname))) ||
         (await cache.match("/offline.html"))
       );
     }
