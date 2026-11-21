@@ -13,7 +13,8 @@ export type User = {
 };
 export const permissions = {
   patient_write: ["captura", "admin"],
-  attention_write: ["captura", "consulta_clinica", "admin"],
+  attention_write: ["captura", "consulta_clinica", "laboratorio", "admin"],
+  clinical_results: ["consulta_clinica", "laboratorio"],
   jornada_write: ["municipio", "admin"],
   approve_requirements: ["admin"],
   authorize_pap: ["consulta_clinica"],

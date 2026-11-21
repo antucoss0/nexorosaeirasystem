@@ -1,4 +1,7 @@
-const CACHE = "eira-shell-v1";
+const CACHE = "eira-shell-v2";
+const cacheable = (path) =>
+  ["/campo", "/admin/jornadas"].includes(path) ||
+  /^\/admin\/pacientes(?:\/[^/]+(?:\/estudio\/[^/]+)?)?$/.test(path);
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
@@ -34,9 +37,7 @@ self.addEventListener("message", (event) => {
       const mode = await cache.match("/__mode");
       if (
         event.data?.type === "CACHE_SHELL" &&
-        ["/campo", "/admin/pacientes", "/admin/jornadas"].includes(
-          event.data.path,
-        ) &&
+        cacheable(new URL(event.data.path, self.location.origin).pathname) &&
         (!mode || (await mode.text()) !== "true")
       ) {
         const res = await fetch(event.data.path);
@@ -96,13 +97,7 @@ async function handle(event, cache, url) {
   if (event.request.mode === "navigate") {
     try {
       const res = await fetch(event.request);
-      if (
-        res.ok &&
-        !res.redirected &&
-        (url.pathname === "/campo" ||
-          url.pathname === "/admin/pacientes" ||
-          url.pathname === "/admin/jornadas")
-      )
+      if (res.ok && !res.redirected && cacheable(url.pathname))
         await cache.put(event.request, res.clone());
       return res;
     } catch {

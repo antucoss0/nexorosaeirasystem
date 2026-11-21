@@ -15,6 +15,7 @@ import {
 import { Connectivity, useConnectivity } from "./connectivity";
 import { type User, roleLabels } from "@/lib/rbac";
 const nav = [
+  ["/admin", "Inicio", ChartNoAxesCombined, ["admin"]],
   ["/campo", "Campo", ClipboardList, ["captura", "admin"]],
   [
     "/admin/pacientes",
@@ -101,7 +102,7 @@ export function Shell({
               <br />
               <strong>Cuidamos historias.</strong>
             </p>
-            <span className="version">EIRA SYSTEM / FASE 01</span>
+            <span className="version">EIRA SYSTEM / FASE 02</span>
           </div>
         </aside>
         <div className="main-column">

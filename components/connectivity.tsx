@@ -10,6 +10,7 @@ import {
 } from "react";
 import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { localDB, type ClientDB } from "@/lib/local";
+import { flattenPatch, expandPatch, fieldValue } from "@/lib/patches";
 const Context = createContext<{
   online: boolean;
   pending: number;
@@ -26,6 +27,7 @@ export function Connectivity({
   children: ReactNode;
 }) {
   const [simulated, setSimulated] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [connected, setConnected] = useState(false);
   const [ready, setReady] = useState(false);
   const [pending, setPending] = useState(0);
@@ -54,7 +56,7 @@ export function Connectivity({
       removeEventListener("offline", change);
     };
   }, [userId]);
-  const online = ready && connected && !simulated;
+  const online = ready && connected && !simulated && !switching;
   onlineRef.current = online;
   const sync = useCallback(async () => {
     if (!db || !onlineRef.current || lock.current) return;
@@ -74,11 +76,15 @@ export function Connectivity({
         if (!res.ok) throw Error(data.error || "No se pudo enviar");
         await db.transaction(
           "rw",
-          [db.patients, db.attentions, db.jornadas, db.outbox],
+          [db.patients, db.attentions, db.jornadas, db.decisions, db.outbox],
           async () => {
             for (const result of data.results) {
               const op = ops.find((o) => o.opId === result.opId)!;
               const table = db[op.table];
+              for (const affected of result.affected || [])
+                await db[
+                  affected.table as "patients" | "attentions" | "jornadas"
+                ].put({ ...affected.record, sync_status: "synced" });
               if (result.remap) {
                 await table.delete(result.remap.from);
                 await db.attentions
@@ -96,15 +102,31 @@ export function Connectivity({
                     q.patch.paciente_uuid = result.remap.to;
                     changed = true;
                   }
+                  for (const key of ["patientId", "otherId"])
+                    if (q.patch[key] === result.remap.from) {
+                      q.patch[key] = result.remap.to;
+                      changed = true;
+                    }
+                  if (q.patch.candidateIds?.includes(result.remap.from)) {
+                    q.patch.candidateIds = q.patch.candidateIds.map(
+                      (id: string) =>
+                        id === result.remap.from ? result.remap.to : id,
+                    );
+                    changed = true;
+                  }
                   if (changed) await db.outbox.put(q);
                 }
+                dispatchEvent(
+                  new CustomEvent("eira-remap", { detail: result.remap }),
+                );
               }
               const queued = await db.outbox.get(op.opId);
               const changed = queued
                 ? Object.fromEntries(
-                    Object.entries(queued.patch).filter(
+                    Object.entries(flattenPatch(queued.patch)).filter(
                       ([k, v]) =>
-                        JSON.stringify(v) !== JSON.stringify(op.patch[k]),
+                        JSON.stringify(v) !==
+                        JSON.stringify(fieldValue(result.record, k)),
                     ),
                   )
                 : {};
@@ -114,7 +136,7 @@ export function Connectivity({
                   opId: crypto.randomUUID(),
                   entityId: result.entityId,
                   type: "update",
-                  patch: changed,
+                  patch: expandPatch(changed),
                   baseVersion: result.record.version,
                   createdAt: new Date().toISOString(),
                 });
@@ -128,9 +150,21 @@ export function Connectivity({
                   !data.results.some((r: any) => r.opId === q.opId),
               );
               const record = result.record || result.server;
+              const pendingPatch = Object.assign(
+                {},
+                ...newer.map((o) => o.patch),
+              );
               await table.put({
                 ...record,
-                ...Object.assign({}, ...newer.map((o) => o.patch)),
+                ...pendingPatch,
+                ...(pendingPatch.form_data
+                  ? {
+                      form_data: {
+                        ...record.form_data,
+                        ...pendingPatch.form_data,
+                      },
+                    }
+                  : {}),
                 sync_status:
                   result.status === "conflict"
                     ? "conflict"
@@ -159,7 +193,8 @@ export function Connectivity({
               const prev = await db[name].get(record.id);
               if (
                 prev?.sync_status === "pending" ||
-                prev?.sync_status === "conflict"
+                (prev?.sync_status === "conflict" &&
+                  !data.resolved?.includes(record.id))
               )
                 continue;
               await db[name].put({ ...record, sync_status: "synced" });
@@ -184,7 +219,7 @@ export function Connectivity({
         .then((reg) => {
           reg.active?.postMessage({
             type: "CACHE_SHELL",
-            path: location.pathname,
+            path: location.pathname + location.search,
           });
         })
         .catch(() => {});
@@ -209,9 +244,12 @@ export function Connectivity({
           <input
             type="checkbox"
             checked={simulated}
+            disabled={switching}
             onChange={async (e) => {
               const value = e.target.checked;
               onlineRef.current = false;
+              setSwitching(true);
+              setSimulated(value);
               localStorage.setItem("eira-offline", String(value));
               const worker = navigator.serviceWorker?.controller;
               if (worker)
@@ -223,7 +261,7 @@ export function Connectivity({
                   ]);
                   setTimeout(resolve, 1000);
                 });
-              setSimulated(value);
+              setSwitching(false);
             }}
           />{" "}
           Offline simulado

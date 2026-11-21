@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
-import { Workspace } from "@/components/workspace";
-export default async function Campo() {
+import { Campo } from "@/components/campo";
+export default async function CampoPage() {
   const user = await currentUser();
   if (!user) redirect("/login");
   if (!["captura", "admin"].includes(user.role)) redirect("/admin/jornadas");
-  return <Workspace section="campo" user={user} />;
+  return <Campo />;
 }

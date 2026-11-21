@@ -22,6 +22,8 @@ CREATE TRIGGER IF NOT EXISTS audit_no_update BEFORE UPDATE ON audit_logs BEGIN S
 CREATE TRIGGER IF NOT EXISTS audit_no_delete BEFORE DELETE ON audit_logs BEGIN SELECT RAISE(ABORT,'append-only'); END;
 CREATE TABLE IF NOT EXISTS conflicts(id TEXT PRIMARY KEY,table_name TEXT,entity_id TEXT,user_id TEXT,op_id TEXT,server_data TEXT,client_patch TEXT,fields TEXT,created_at TEXT);
 CREATE TABLE IF NOT EXISTS applied_ops(op_id TEXT PRIMARY KEY,user_id TEXT NOT NULL,result TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,data TEXT NOT NULL,version INTEGER NOT NULL,updated_at TEXT NOT NULL,updated_by TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS conflict_resolutions(conflict_id TEXT PRIMARY KEY,decision_id TEXT NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS files(id TEXT PRIMARY KEY,filename TEXT NOT NULL,path TEXT NOT NULL,mime TEXT NOT NULL,size INTEGER NOT NULL,version INTEGER NOT NULL,updated_at TEXT NOT NULL,updated_by TEXT NOT NULL);
 `);
 db.prepare("INSERT OR IGNORE INTO settings VALUES (?,?)").run(
@@ -223,4 +225,32 @@ db.transaction(() => {
     attentions: 18,
     jornadas: 3,
   });
+}).immediate();
+db.transaction(() => {
+  if (
+    db
+      .prepare("SELECT value FROM settings WHERE key=?")
+      .get("phase2_demo_active")
+  )
+    return;
+  const row = decode(
+    db.prepare("SELECT * FROM jornadas WHERE id=?").get("JOR-001"),
+  );
+  if (row?.version === 1 && row.estado_general === "En preparación") {
+    const { id, version, updated_at, updated_by, ...data } = row;
+    save(
+      "jornadas",
+      id,
+      { ...data, estado_general: "Activa" },
+      version + 1,
+      "admin",
+    );
+    audit({ id: "admin", role: "admin" }, "jornadas", "activar_demo", id, {
+      estado_general: "Activa",
+    });
+  }
+  db.prepare("INSERT INTO settings VALUES (?,?)").run(
+    "phase2_demo_active",
+    "1",
+  );
 }).immediate();

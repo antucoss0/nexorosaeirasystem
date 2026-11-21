@@ -11,6 +11,7 @@ class LocalDB extends Dexie {
   patients!: Table<LocalRecord, string>;
   attentions!: Table<LocalRecord, string>;
   jornadas!: Table<LocalRecord, string>;
+  decisions!: Table<LocalRecord, string>;
   outbox!: Table<Operation, string>;
   meta!: Table<{ key: string; value: string }, string>;
   constructor(userId: string) {
@@ -22,6 +23,7 @@ class LocalDB extends Dexie {
       outbox: "opId,createdAt,entityId",
       meta: "key",
     });
+    this.version(2).stores({ decisions: "id" });
   }
 }
 export type ClientDB = LocalDB;
@@ -30,6 +32,7 @@ export function localDB(id: string) {
   if (!databases.has(id)) databases.set(id, new LocalDB(id));
   return databases.get(id)!;
 }
+let lastWrite = 0;
 export async function localWrite(
   db: LocalDB,
   table: Operation["table"],
@@ -51,11 +54,22 @@ export async function localWrite(
           type,
           patch,
           baseVersion: prev?.version || 0,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(
+            (lastWrite = Math.max(Date.now(), lastWrite + 1)),
+          ).toISOString(),
         };
+    if (table === "attentions" && patch.form_data) {
+      op.patch = {
+        ...op.patch,
+        form_data: { ...queued?.patch.form_data, ...patch.form_data },
+      };
+    }
     await db[table].put({
       ...prev,
       ...patch,
+      ...(table === "attentions" && patch.form_data
+        ? { form_data: { ...prev?.form_data, ...patch.form_data } }
+        : {}),
       id: entityId,
       version: prev?.version || 0,
       sync_status: "pending",
