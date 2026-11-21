@@ -108,8 +108,10 @@
 .pz-hint { text-align: right; }
 
 @media (max-width: 900px) {
-  .pz-slide { align-items: flex-end; padding: 80px 18px 128px; }
-  .pz-slide.center { align-items: center; }
+  /* auto margins keep the bottom alignment but let tall slides scroll from their top */
+  .pz-slide { align-items: flex-start; overflow-y: auto; padding: 80px 18px 128px; }
+  .pz-copy { margin-top: auto; }
+  .pz-slide.center .pz-copy { margin-block: auto; }
   .pz-tag, .pz-hint, .pz-clock { display: none; }
   .pz-controls { grid-template-columns: 1fr auto; }
   .pz-grid.three, .pz-stats { grid-template-columns: 1fr; gap: 8px; }
