@@ -122,7 +122,7 @@ node scripts/phase2-check.mjs
 node scripts/phase3-check.mjs
 ```
 
-Evidencia de Reto 3 en `~/screenshots/nexo-phase4`: mapeo, calidad, indicadores, landing, guía, `informe-impacto.csv` e `informe-impacto.pdf`. Los scripts aceptan `BASE_URL`; fase 4 también `EVIDENCE_DIR`. Cada ejecución crea datos sintéticos adicionales y conserva su auditoría; las actividades importadas repetidas se deduplican por su clave común.
+Evidencia de impacto en `~/screenshots/nexo-phase4`: mapeo, calidad, indicadores, landing, guía, `informe-impacto.csv` e `informe-impacto.pdf`. Los scripts aceptan `BASE_URL`; fase 4 también `EVIDENCE_DIR`. Cada ejecución crea datos sintéticos adicionales y conserva su auditoría; las actividades importadas repetidas se deduplican por su clave común.
 
 ## API: ejemplo mínimo
 

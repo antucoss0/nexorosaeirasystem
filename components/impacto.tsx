@@ -152,7 +152,7 @@ export function Impacto() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">RETO 3 · EVIDENCIA PARA DECIDIR</span>
+          <span className="eyebrow">EVIDENCIA PARA DECIDIR</span>
           <h1>Una persona, un impacto que cuenta.</h1>
           <p>
             Consolidar fuentes sin confundir personas con servicios ni estudios.

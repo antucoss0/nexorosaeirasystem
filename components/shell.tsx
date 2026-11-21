@@ -102,7 +102,7 @@ export function Shell({
               <br />
               <strong>Cuidamos historias.</strong>
             </p>
-            <span className="version">EIRA SYSTEM / FASE 04</span>
+            <span className="version">EIRA SYSTEM · 2026</span>
           </div>
         </aside>
         <div className="main-column">

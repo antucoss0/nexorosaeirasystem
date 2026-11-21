@@ -109,7 +109,7 @@ try {
   const jornada = await action(admin.p, "Guardar jornada", "save");
   await expect(admin.p.locator(".jornada-detail")).toContainText(sede);
   console.log(
-    "RETO2 crear jornada · checklist configurable · amarillo con >7 días",
+    "JORNADAS crear jornada · checklist configurable · amarillo con >7 días",
   );
   await admin.p
     .getByLabel("Presidente/a municipal")
@@ -204,7 +204,7 @@ try {
     lab.p.getByTestId("pap-row").filter({ hasText: associated.id }),
   ).toContainText("Cargado");
   console.log(
-    "RETO4 laboratorio genera PDF sintético · 2 atributos confirmados · Cargado",
+    "PAP laboratorio genera PDF sintético · 2 atributos confirmados · Cargado",
   );
   assert.equal(
     (
@@ -382,7 +382,7 @@ try {
     "REVOCACIÓN invalida la sesión y el enlace anterior · PDF no público",
   );
   assert.deepEqual(failures, []);
-  console.log("PASS PHASE 3 · Reto 2 + Reto 4 · 0 errores de navegador");
+  console.log("PASS PHASE 3 · 0 errores de navegador");
 } catch (e) {
   for (let i = 0; i < pages.length; i++)
     if (!pages[i].isClosed())

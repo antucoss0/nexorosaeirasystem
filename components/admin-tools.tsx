@@ -567,7 +567,7 @@ export function Dashboard() {
           [
             "/guia",
             "Guía de demostración",
-            "Recorrer los cuatro retos y sus roles",
+            "Recorrer los módulos y sus roles",
           ],
           [
             "/admin/conflictos",

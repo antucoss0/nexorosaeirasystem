@@ -121,7 +121,7 @@ export function Jornadas({ user }: { user: User }) {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">RETO 2 · COORDINACIÓN COMUNITARIA</span>
+          <span className="eyebrow">COORDINACIÓN COMUNITARIA</span>
           <h1>Preparar juntas, cuidar mejor.</h1>
           <p>
             Acuerdos claros, requisitos con seguimiento y recordatorios amables.
