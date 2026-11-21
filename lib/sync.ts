@@ -82,6 +82,11 @@ function allowed(user: User, op: Operation, current: any) {
   if (!can(user.role, permission))
     throw new SyncError("No tienes permiso para esta operación", 403);
   if (op.table === "attentions") {
+    if (current?.pap_managed)
+      throw new SyncError(
+        "Los documentos PAP requieren su flujo seguro de autorización",
+        403,
+      );
     const protectedFields = [
       "pdf_file_id",
       "token_hash",
@@ -222,6 +227,11 @@ function allowed(user: User, op: Operation, current: any) {
           throw new SyncError("Solo administración aprueba requisitos", 403);
       }
     }
+    if ("versiones_carta" in op.patch || "requisitos" in op.patch)
+      throw new SyncError(
+        "Los requisitos y cartas requieren el flujo institucional protegido",
+        403,
+      );
   }
 }
 export function validateOperation(value: any): asserts value is Operation {

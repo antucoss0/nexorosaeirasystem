@@ -39,13 +39,13 @@ Contraseña común: **eira2026**. El inicio permite email/contraseña o botones 
 - `GET /api/sync/pull?since=<ISO>` devuelve registros cambiados y cursor. Consulta inclusiva para evitar pérdidas en el mismo milisegundo; la siguiente descarga es idempotente. No reemplaza registros locales pendientes o en conflicto.
 - Barra global: conectividad real + simulada persistente, contador pendiente, sincronización manual y automática al volver online. Los fetch del cliente se bloquean cuando está offline; el service worker sirve caché sin red en modo simulado. Una solicitud ya iniciada antes del cambio puede terminar; no se inicia otra.
 - PWA: manifiesto y service worker básico para recursos estáticos, página offline y shell visitado. Las APIs nunca se cachean. Los shells autenticados se eliminan en login/logout exitosos; no se cachean bitácora o conflictos. Abrir el espacio una vez online antes de usarlo sin conexión. IndexedDB conserva información por dispositivo; no compartir perfiles de navegador. No es un sistema de almacenamiento clínico cifrado.
-- `audit_logs` es append-only incluso en SQLite mediante triggers. Cada operación aplicada y conflicto queda auditado. `POST /api/files` acepta un PDF de hasta 10 MB, solo laboratorio; archivos en `data/files`, metadatos en tabla. Descarga autenticada `GET /api/files/[id]`. Asociación clínica y entrega por token están pendientes; `/resultado/[token]` nunca revela datos.
+- `audit_logs` es append-only incluso en SQLite mediante triggers. Cada operación aplicada y conflicto queda auditado. `POST /api/files` acepta PDF de laboratorio o requisitos municipales PDF/PNG/JPEG (10 MB), con archivos en `data/files` y metadatos/contexto en tablas. Descarga de personal autenticado y autorizado por contexto: `GET /api/files/[id]`. La entrega personal usa `/resultado/[token]` y una sesión limitada a un documento; ver Fase 3.
 
 ## Datos y pantallas
 
 Seed: 3 jornadas (Zapotlán el Grande / Ciudad Guzmán, Tuxpan, Gómez Farías), 10 pacientes, 18 atenciones en cinco categorías. Dos pares de nombres deliberadamente similares; nunca se fusionan automáticamente. `public/samples/` contiene dos CSV sintéticos de 20 filas, encabezados diferentes, personas repetidas, faltantes y fechas inválidas.
 
-Rutas: `/login`, `/campo`, `/admin`, `/admin/pacientes`, `/admin/conflictos`, `/admin/bitacora`, `/admin/jornadas`, `/admin/pap`, `/admin/impacto` y `/resultado/[token]`. Jornadas, PAP, Impacto y portal siguen siendo bases para próximas fases.
+Rutas: `/login`, `/campo`, `/admin`, `/admin/pacientes`, `/admin/conflictos`, `/admin/bitacora`, `/admin/jornadas`, `/admin/pap`, `/admin/impacto` y `/resultado/[token]`. Impacto detallado e importación siguen pendientes para próximas fases.
 
 ## Fase 2 · Identidad y atención clínica
 
@@ -70,6 +70,27 @@ node scripts/phase2-check.mjs
 
 El script Playwright headless prueba la captura offline de `Maria Guadalupe Lopez`, comparación obligatoria, misma paciente con segunda visita, cero llamadas API offline y cero pendientes al reconectar. También verifica contactos selectivos, formularios, permisos de resultados, resolución de conflicto, descarte recordado, filtros/CSV y KPIs. Guarda cuatro PNG y un PDF imprimible en `~/screenshots/nexo-phase2`; acepta `BASE_URL` y `EVIDENCE_DIR`. No requiere servicios externos ni modifica datos reales.
 
+## Fase 3 · Jornadas y entrega segura
+
+- Marca actualizada: corazón, manos y cruz rosa, sin el monograma anterior.
+- `/admin/jornadas`: alta/edición administrativa, servicios múltiples, responsables, enlace y checklist configurable. Municipio solo consulta sus jornadas y sube PDF/PNG/JPEG a cada requisito (10 MB); las correcciones, reentregas y aprobaciones conservan historial y auditoría. Semáforo: verde con todo aprobado, amarillo con pendientes a más de siete días, rojo con observaciones o fecha cercana/vencida. El enlace municipal ve sus avisos; los recordatorios amables se registran en `notifications`, uno por requisito cada 24 horas, sin envío real.
+- Carta Compromiso: seis cláusulas protegidas en servidor, plantilla versionada y SHA-256 verificado antes de descargar. Solo las variables cambian; cada emisión agrega una versión inmutable con autor, fecha y diff. `pdf-lib` genera el PDF institucional descargable con contacto EIRA. La sincronización genérica no puede modificar requisitos ni versiones de cartas.
+- `/admin/pap`: laboratorio carga PDF con MIME y firma `%PDF-` correctos (10 MB), verifica dos atributos distintos contra el expediente y lo asocia. Incluye generador sintético. Admin revisa identidad/legibilidad o devuelve con nota; únicamente Médico autoriza. Después, admin notifica, revoca/regenera o registra entrega asistida con promotora, método, fecha y firma de recibido. Hay filtros y alerta no leído >48 h.
+- Portal `/resultado/[token]`: no requiere cuenta; exige enlace válido y nacimiento o últimos cuatro dígitos de teléfono. Cinco fallos bloquean el token. La sesión HttpOnly dura diez minutos, está limitada a la ruta de ese documento y también caduca/revoca junto con el token. Solo abrir/descargar el PDF registra `Consultado`; la URL original de archivos nunca es pública.
+- Tokens aleatorios de 256 bits, solo hashes SHA-256 persistidos. **Para no guardar el token dentro del texto del SMS/email simulado**, `notifications` conserva el mensaje neutral con `{{enlace_privado}}`; el enlace real aparece únicamente en la respuesta/vista previa al emitir. Regenerar invalida el anterior. El guardia del servidor rechaza términos clínicos; nunca se envía SMS/email real. Vigencia predeterminada 72 h, configurable entre 1 y 168 h.
+- Seed idempotente al abrir PAP: tres documentos sintéticos en distintos estados, uno sin leer desde hace 60 h y una paciente sintética adicional sin teléfono propio. Los archivos se guardan bajo `data/files`, protegidos por contexto y rol. Configura `APP_ORIGIN` si la URL pública difiere del origen del servidor y `COOKIE_SECURE=true` bajo HTTPS.
+- Los nuevos circuitos de aprobación, carga de archivos y entrega requieren conexión y confirman sus transacciones en servidor; no se simulan aprobaciones offline. La infraestructura Dexie/outbox de Campo y los formularios de Fase 2 sigue funcionando sin cambios en su contrato.
+
+Verificación (con servidor de producción en ejecución):
+
+```sh
+npm test
+npm run build
+node scripts/phase3-check.mjs
+```
+
+El script crea una jornada sintética, genera carta v1, carga/revisa/corrige/reentrega/aprueba, comprueba el semáforo y descarga la carta. También completa laboratorio → admin → médico → mensaje neutral → portal verificado → descarga → Consultado, entrega asistida y revocación. Evidencias en `~/screenshots/nexo-phase3` (cuatro PNG y dos PDF). Acepta `BASE_URL` y `EVIDENCE_DIR`. No usar con información real; faltan endurecimiento operativo, cifrado local, antivirus, rate limiting por IP y entrega de comunicaciones reales.
+
 ## API: ejemplo mínimo
 
 ```sh
@@ -92,4 +113,4 @@ El volumen conserva SQLite, clave de firma y PDFs. Ejecuta como usuario no root.
 
 ## Límites de esta fase / seguridad
 
-No usar con datos reales. Faltan rotación de sesiones, recuperación de contraseña, rate limiting, cifrado de dispositivo y escaneo antivirus. El portal PAP no emite tokens ni notificaciones. La versión Next 14 fue exigida por el alcance; `npm audit` reporta vulnerabilidades del framework sin parche en la serie 14 (actualizar a una versión mantenida requiere cambiar esa decisión). No exponer la demo a internet ni considerarla lista para producción.
+No usar con datos reales. Faltan rotación de sesiones, recuperación de contraseña, rate limiting por IP, cifrado de dispositivo y escaneo antivirus. Las notificaciones son simuladas, no envíos reales. La versión Next 14 fue exigida por el alcance; `npm audit` reporta vulnerabilidades del framework sin parche en la serie 14 (actualizar a una versión mantenida requiere cambiar esa decisión). No exponer la demo a internet ni considerarla lista para producción.

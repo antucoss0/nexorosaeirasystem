@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Connectivity, useConnectivity } from "./connectivity";
 import { type User, roleLabels } from "@/lib/rbac";
+import { BrandMark } from "./brand-mark";
 const nav = [
   ["/admin", "Inicio", ChartNoAxesCombined, ["admin"]],
   ["/campo", "Campo", ClipboardList, ["captura", "admin"]],
@@ -72,9 +73,7 @@ export function Shell({
       >
         <aside className="sidebar">
           <Link href="/campo" className="brand">
-            <span className="brand-mark">
-              n<span>r</span>
-            </span>
+            <BrandMark />
             <div>
               NEXO ROSA<small>EIRA SYSTEM</small>
             </div>
@@ -102,7 +101,7 @@ export function Shell({
               <br />
               <strong>Cuidamos historias.</strong>
             </p>
-            <span className="version">EIRA SYSTEM / FASE 02</span>
+            <span className="version">EIRA SYSTEM / FASE 03</span>
           </div>
         </aside>
         <div className="main-column">

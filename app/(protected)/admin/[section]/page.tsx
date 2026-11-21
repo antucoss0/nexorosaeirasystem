@@ -5,6 +5,8 @@ import { can } from "@/lib/rbac";
 import { Workspace } from "@/components/workspace";
 import { Patients } from "@/components/patients";
 import { AdminConflicts, AuditViewer } from "@/components/admin-tools";
+import { Jornadas } from "@/components/jornadas";
+import { PapPanel } from "@/components/pap";
 export default async function Admin({
   params,
 }: {
@@ -40,6 +42,8 @@ export default async function Admin({
   if (section === "pacientes") return <Patients />;
   if (section === "conflictos") return <AdminConflicts />;
   if (section === "bitacora") return <AuditViewer />;
+  if (section === "jornadas") return <Jornadas user={user} />;
+  if (section === "pap") return <PapPanel user={user} />;
   const entries =
     section === "bitacora"
       ? db.prepare("SELECT * FROM audit_logs ORDER BY id DESC LIMIT 100").all()

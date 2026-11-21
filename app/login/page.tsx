@@ -1,6 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import { ArrowRight, HeartHandshake, ShieldCheck, WifiOff } from "lucide-react";
+import { BrandMark } from "@/components/brand-mark";
 const demos = [
   ["brigadista", "Brigadista"],
   ["medico", "Médico"],
@@ -43,9 +44,7 @@ export default function Login() {
     <main className="login-page">
       <section className="login-story">
         <div className="brand">
-          <span className="brand-mark">
-            n<span>r</span>
-          </span>
+          <BrandMark />
           <div>
             NEXO ROSA<small>EIRA SYSTEM</small>
           </div>
