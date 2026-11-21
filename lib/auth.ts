@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { requestOrigin } from "./request-origin";
 import { db, jwtSecret } from "./db";
 import type { User } from "./rbac";
 const key = new TextEncoder().encode(jwtSecret);
@@ -32,7 +33,7 @@ export function sameOrigin(req: Request) {
     const url = new URL(origin);
     return (
       ["http:", "https:"].includes(url.protocol) &&
-      url.host === (req.headers.get("host") || new URL(req.url).host)
+      url.host === new URL(requestOrigin(req)).host
     );
   } catch {
     return false;

@@ -11,6 +11,10 @@ import {
 import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { localDB, type ClientDB } from "@/lib/local";
 import { flattenPatch, expandPatch, fieldValue } from "@/lib/patches";
+import {
+  registerOptionalServiceWorker,
+  serviceWorkerContainer,
+} from "@/lib/service-worker";
 const Context = createContext<{
   online: boolean;
   pending: number;
@@ -45,12 +49,11 @@ export function Connectivity({
     const change = () => setConnected(navigator.onLine);
     addEventListener("online", change);
     addEventListener("offline", change);
-    if (
-      "serviceWorker" in navigator &&
-      navigator.onLine &&
-      localStorage.getItem("eira-offline") !== "true"
-    )
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    if (navigator.onLine && localStorage.getItem("eira-offline") !== "true")
+      void registerOptionalServiceWorker(
+        location.hostname,
+        process.env.NEXT_PUBLIC_ENABLE_SW,
+      );
     return () => {
       removeEventListener("online", change);
       removeEventListener("offline", change);
@@ -215,14 +218,15 @@ export function Connectivity({
   useEffect(() => {
     if (online) {
       void sync();
-      navigator.serviceWorker?.ready
-        .then((reg) => {
-          reg.active?.postMessage({
+      void (async () => {
+        try {
+          const reg = await serviceWorkerContainer()?.getRegistration();
+          reg?.active?.postMessage({
             type: "CACHE_SHELL",
             path: location.pathname + location.search,
           });
-        })
-        .catch(() => {});
+        } catch {}
+      })();
     }
   }, [online, sync]);
   useEffect(() => {
@@ -251,16 +255,18 @@ export function Connectivity({
               setSwitching(true);
               setSimulated(value);
               localStorage.setItem("eira-offline", String(value));
-              const worker = navigator.serviceWorker?.controller;
-              if (worker)
-                await new Promise<void>((resolve) => {
-                  const channel = new MessageChannel();
-                  channel.port1.onmessage = () => resolve();
-                  worker.postMessage({ type: "OFFLINE", value }, [
-                    channel.port2,
-                  ]);
-                  setTimeout(resolve, 1000);
-                });
+              try {
+                const worker = serviceWorkerContainer()?.controller;
+                if (worker)
+                  await new Promise<void>((resolve) => {
+                    const channel = new MessageChannel();
+                    channel.port1.onmessage = () => resolve();
+                    worker.postMessage({ type: "OFFLINE", value }, [
+                      channel.port2,
+                    ]);
+                    setTimeout(resolve, 1000);
+                  });
+              } catch {}
               setSwitching(false);
             }}
           />{" "}

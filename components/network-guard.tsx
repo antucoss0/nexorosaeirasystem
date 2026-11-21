@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { serviceWorkerContainer } from "@/lib/service-worker";
 export function NetworkGuard() {
   useEffect(() => {
     const original = window.fetch;
@@ -11,16 +12,19 @@ export function NetworkGuard() {
       return original(...args);
     };
     const update = () => {
-      navigator.serviceWorker?.controller?.postMessage({
-        type: "OFFLINE",
-        value: localStorage.getItem("eira-offline") === "true",
-      });
+      try {
+        serviceWorkerContainer()?.controller?.postMessage({
+          type: "OFFLINE",
+          value: localStorage.getItem("eira-offline") === "true",
+        });
+      } catch {}
     };
-    navigator.serviceWorker?.addEventListener("controllerchange", update);
+    const worker = serviceWorkerContainer();
+    worker?.addEventListener("controllerchange", update);
     update();
     return () => {
       window.fetch = original;
-      navigator.serviceWorker?.removeEventListener("controllerchange", update);
+      worker?.removeEventListener("controllerchange", update);
     };
   }, []);
   return null;

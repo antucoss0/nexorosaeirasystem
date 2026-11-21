@@ -1,4 +1,5 @@
 "use client";
+import { ChangeRequestLink } from "./change-request-link";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -127,6 +128,7 @@ export function Shell({
           <main className="content">{children}</main>
           <footer className="app-footer">
             <span>Nexo Rosa EIRA · Cada historia cuenta.</span>
+            <ChangeRequestLink />
             <span>
               Datos sintéticos · Entorno de demostración{" "}
               <ArrowUpRight size={13} />

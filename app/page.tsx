@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChangeRequestLink } from "@/components/change-request-link";
 import {
   HeartHandshake,
   ShieldCheck,
@@ -90,6 +91,8 @@ export default function Home() {
         C.P. 49000.
         <br />
         Tel. 3414108111 y 3411596782 · hola@eiraac.org
+        <br />
+        <ChangeRequestLink />
       </footer>
     </main>
   );

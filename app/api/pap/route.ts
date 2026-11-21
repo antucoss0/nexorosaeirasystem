@@ -9,6 +9,7 @@ import {
   documentPDF,
 } from "@/lib/phase3";
 import { db, decode, audit } from "@/lib/db";
+import { requestOrigin } from "@/lib/request-origin";
 export const dynamic = "force-dynamic";
 export async function GET() {
   try {
@@ -57,11 +58,7 @@ export async function POST(req: Request) {
     const result =
       body.action === "associate"
         ? associatePAP(user, body)
-        : papAction(
-            user,
-            body,
-            process.env.APP_ORIGIN || new URL(req.url).origin,
-          );
+        : papAction(user, body, process.env.APP_ORIGIN || requestOrigin(req));
     return NextResponse.json(result);
   } catch (e) {
     return failure(e);

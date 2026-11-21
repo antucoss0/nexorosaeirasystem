@@ -2,6 +2,8 @@
 
 Plataforma local-first de cuidado y coordinación comunitaria. Interfaz en español; **solo datos sintéticos**. Fases 1–4: captura e identidad asistida, formularios clínicos, coordinación municipal y cartas, entrega segura de documentos e impacto con calidad de datos.
 
+Licencia [MIT](LICENSE). Copyright © 2026 EIRA Movimiento Rosa A.C. y colaboradores.
+
 ## Inicio local
 
 Requiere Node.js 20 LTS y npm. En esta máquina: `source ~/.nvm/nvm.sh && nvm use 20`.
@@ -13,6 +15,12 @@ npm start # http://localhost:3000
 ```
 
 También: `PORT=3100 DATA_DIR=/ruta/persistente npm start`. `DATA_DIR` contiene `nexo.db` y `files/`; si no se define se usa `./data`. El puerto se toma del entorno por Next CLI (no está fijado con `-p`). Landing pública `/` y guía `/guia` con recorridos y accesos.
+
+### Hospedaje detrás de proxy autenticado
+
+El service worker es opcional: se intenta registrar solo en localhost (incluye 127.0.0.1/IPv6) o compilando con `NEXT_PUBLIC_ENABLE_SW=1`. No habilitarlo si el proxy rechaza scripts SW: errores de registro no impiden usar la aplicación. Dexie, outbox y el modo offline simulado no dependen de él; sin SW no se garantiza recargar páginas con desconexión real. El manifest usa credenciales y sus iconos son rutas relativas al mismo origen.
+
+El proxy debe establecer/sanear `X-Forwarded-Host` y `X-Forwarded-Proto` para reflejar el origen público. Los enlaces del portal usan esos encabezados, luego Host/URL de la solicitud; no hay fallback a localhost. `APP_ORIGIN` permite fijar explícitamente un origen público. No aceptar encabezados forwarded arbitrarios de clientes sin un proxy confiable delante.
 
 Desarrollo: `npm run dev`. Pruebas de la capa de sincronización: `npm test`.
 Montserrat usa `next/font/google`; la primera compilación requiere acceso a Google Fonts. SQLite y los datos de demostración se crean automáticamente al cargar el servidor (Next también puede inicializarlos durante el build). No hay servicio externo de base de datos.

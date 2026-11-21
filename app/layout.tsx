@@ -6,7 +6,6 @@ const montserrat = Montserrat({ subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
   title: "Nexo Rosa · EIRA",
   description: "Un mismo cuidado. Un expediente único.",
-  manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "Nexo Rosa" },
 };
 export const viewport: Viewport = {
@@ -21,6 +20,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        <link
+          rel="manifest"
+          href="/manifest.webmanifest"
+          crossOrigin="use-credentials"
+        />
+      </head>
       <body className={montserrat.className}>
         <NetworkGuard />
         {children}
