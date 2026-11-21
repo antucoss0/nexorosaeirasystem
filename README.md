@@ -18,7 +18,7 @@ Licencia [MIT](LICENSE). Copyright © 2026 EIRA Movimiento Rosa A.C. y colaborad
 6. Entra como **Administración**: **Expedientes** (visitas, atenciones y estudios separados), **Conflictos** (ediciones simultáneas del mismo campo) y **Bitácora** (quién cambió qué, exportable a CSV).
 7. Control de acceso: con la sesión de Brigadista, `/admin/bitacora` muestra "Acceso restringido" y las APIs de administración (`/api/admin/*`) responden 403.
 
-`npm test` y `scripts/phase2-check.mjs` reproducen este flujo de forma automática.
+`npm test`, `scripts/phase2-check.mjs` y `scripts/offline-check.mjs` reproducen este flujo de forma automática. Los scripts se ejecutan con `BASE_URL=http://localhost:3000 node scripts/<nombre>` sobre un servidor de producción local.
 
 ### Implementado y simulado
 
@@ -30,10 +30,12 @@ Licencia [MIT](LICENSE). Copyright © 2026 EIRA Movimiento Rosa A.C. y colaborad
 | Roles validados en servidor y bitácora que no admite edición ni borrado | Implementado |
 | Formatos de revisión mamaria y citología cervical | Implementado |
 | Exportación en formatos abiertos (CSV, XLSX, PDF) | Implementado |
-| Pérdida de conexión | Simulada con un interruptor; no se probó en celulares con mala señal |
+| Pérdida de conexión | Interruptor de simulación y, además, corte real de red verificado en Chromium (`scripts/offline-check.mjs`): la app recarga desde el service worker, captura, conserva la cola y sincroniza al volver la red. No se probó en celulares físicos |
 | Avisos por correo o SMS | Simulados; no se envía nada |
 | Pacientes, municipios y archivos | Sintéticos |
-| Cifrado en reposo de base de datos, archivos y datos del dispositivo | No implementado |
+| Cifrado en reposo de archivos (PDF de resultados y requisitos) | Implementado: AES-256-GCM con `DATA_KEY` (`lib/crypto.ts`) |
+| Cifrado de la base SQLite | No implementado; para el piloto, base gestionada con cifrado o SQLCipher |
+| Datos en el dispositivo | Se borran al cerrar sesión, con aviso si hay operaciones sin sincronizar. No están cifrados mientras la sesión está abierta |
 | Alta de usuarios, recuperación de contraseña y 2FA | No implementado; solo existen los cinco usuarios demo |
 
 ### Decisiones de diseño
@@ -60,6 +62,10 @@ Licencia [MIT](LICENSE). Copyright © 2026 EIRA Movimiento Rosa A.C. y colaborad
 - ¿Cuánto tiempo se conserva un expediente y quién puede darlo de baja?
 - ¿Los formatos de revisión mamaria y citología digitalizados reflejan la versión vigente?
 - ¿Qué volumen por jornada y cuántos días sin conexión hay que soportar?
+
+## Despliegue gratuito en Render
+
+`render.yaml` describe el servicio (Docker, plan gratuito). En Render: **New → Blueprint**, elegir este repositorio y aplicar. Genera `SESSION_SECRET` y `DATA_KEY`. El plan gratuito no tiene disco persistente: los datos vuelven a los de demostración en cada reinicio.
 
 ## Inicio local
 
@@ -203,4 +209,4 @@ El volumen conserva SQLite, clave de firma y PDFs. Ejecuta como usuario no root.
 
 ## Límites de esta fase / seguridad
 
-No usar con datos reales. Faltan rotación de sesiones, recuperación de contraseña, rate limiting por IP, cifrado de dispositivo y escaneo antivirus. Las notificaciones son simuladas, no envíos reales. En Fase 4 se actualizó a Next 15.5.29 y React 19, con APIs asíncronas de params/cookies. Overrides compatibles de PostCSS 8.5.33 y uuid 11.1.1 eliminan avisos transitivos de Next y ExcelJS, sin ocultarlos del audit. No exponer la demo a internet ni considerarla lista para producción.
+No usar con datos reales. Faltan rotación de sesiones, recuperación de contraseña, rate limiting por IP, cifrado de la base de datos y del dispositivo, y escaneo antivirus. Sin `DATA_KEY`, la llave de cifrado de archivos se guarda en `DATA_DIR/data.key`, junto a los datos; en producción debe venir de un gestor de secretos. Las notificaciones son simuladas, no envíos reales. En Fase 4 se actualizó a Next 15.5.29 y React 19, con APIs asíncronas de params/cookies. Overrides compatibles de PostCSS 8.5.33 y uuid 11.1.1 eliminan avisos transitivos de Next y ExcelJS, sin ocultarlos del audit. No exponer la demo a internet ni considerarla lista para producción.

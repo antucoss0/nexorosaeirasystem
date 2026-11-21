@@ -1,3 +1,4 @@
+import { open } from "@/lib/crypto";
 import { cookies } from "next/headers";
 import { readFile } from "node:fs/promises";
 import {
@@ -15,7 +16,7 @@ export async function GET(
   try {
     const session = (await cookies()).get(documentCookie(id))?.value;
     const { file } = validatePortalSession(session, id);
-    const bytes = await readFile(file.path);
+    const bytes = open(await readFile(file.path));
     markConsulted(session!, id);
     const response = pdfResponse(bytes, "documento-eira.pdf");
     if (new URL(req.url).searchParams.get("view") === "1")

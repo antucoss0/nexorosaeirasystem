@@ -4,6 +4,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ARG NEXT_PUBLIC_ENABLE_SW
+ENV NEXT_PUBLIC_ENABLE_SW=$NEXT_PUBLIC_ENABLE_SW
 RUN npm run build && npm prune --omit=dev
 FROM node:20-bookworm-slim
 WORKDIR /app

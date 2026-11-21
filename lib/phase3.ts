@@ -1,3 +1,4 @@
+import { seal } from "./crypto";
 import {
   createHash,
   randomBytes,
@@ -1070,7 +1071,7 @@ export function ensurePapSeed() {
         const id = "PAP-DEMO-" + (i + 1),
           fileId = randomUUID(),
           path = join(filesDir, fileId + ".pdf");
-        writeFileSync(path, bytes, { flag: "wx" });
+        writeFileSync(path, seal(bytes), { flag: "wx" });
         const timestamp = new Date(
           Date.now() - (i === 1 ? 60 : 1) * 3600000,
         ).toISOString();

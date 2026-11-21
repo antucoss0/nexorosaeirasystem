@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: nexo-rosa-eira
+    runtime: docker
+    plan: free
+    healthCheckPath: /login
+    envVars:
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: NEXT_PUBLIC_ENABLE_SW
+        value: "1"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATA_KEY
+        generateValue: true
