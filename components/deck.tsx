@@ -228,6 +228,7 @@ export function Deck() {
   const [prev, setPrev] = useState(-1);
   const [playing, setPlaying] = useState(false);
   const [started, setStarted] = useState(false);
+  const [ended, setEnded] = useState(false);
   const scene = useRef<SceneState>({ shape: slides[0].shape, side: slides[0].side, burst: 0 });
   const root = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -242,6 +243,7 @@ export function Deck() {
     setPrev(live.current.idx);
     live.current.idx = next; live.current.elapsed = 0;
     scene.current.shape = slides[next].shape; scene.current.side = slides[next].side; scene.current.burst = 1;
+    setEnded(false);
     setIdx(next);
   }, []);
   const toggle = useCallback(() => {
@@ -265,7 +267,7 @@ export function Deck() {
         l.elapsed += dt;
         if (l.elapsed >= slides[l.idx].secs) {
           if (l.idx < slides.length - 1) go(l.idx + 1);
-          else { l.elapsed = slides[l.idx].secs; l.playing = false; setPlaying(false); }
+          else { l.elapsed = slides[l.idx].secs; l.playing = false; setPlaying(false); setEnded(true); }
         }
       }
       fills.current.forEach((el, i) => { if (el) el.style.transform = `scaleX(${i < l.idx ? 1 : i > l.idx ? 0 : Math.min(1, l.elapsed / slides[i].secs)})`; });
@@ -322,7 +324,6 @@ export function Deck() {
     return () => { clearTimeout(timer); cancelAnimationFrame(raf); window.removeEventListener("pointermove", move); window.removeEventListener("resize", measure); };
   }, [idx]);
 
-  const ended = !playing && idx === slides.length - 1 && started;
   return (
     <div className={"pz" + (playing ? " playing" : "")} ref={root}>
       <svg width="0" height="0" aria-hidden="true" style={{ position: "absolute" }}>
