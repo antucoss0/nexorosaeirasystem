@@ -6,6 +6,10 @@ import {
 } from "@/lib/service-worker";
 export function NetworkGuard() {
   useEffect(() => {
+    // Simulated offline belongs to the field workspace; a public page always starts connected,
+    // otherwise a forgotten switch blocks sign-in and every page that is not stored.
+    if (!/^\/(campo|admin)(\/|$)/.test(location.pathname))
+      localStorage.removeItem("eira-offline");
     const original = window.fetch;
     window.fetch = (...args) => {
       if (!navigator.onLine || localStorage.getItem("eira-offline") === "true")

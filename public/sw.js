@@ -1,4 +1,4 @@
-const CACHE = "eira-shell-v3";
+const CACHE = "eira-shell-v4";
 // Public pages are stored with everything they need so they open without a network.
 const PUBLIC = ["/", "/presentacion", "/login", "/guia"];
 async function precache(cache) {
