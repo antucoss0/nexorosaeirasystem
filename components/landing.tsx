@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowDown,
+  Play,
   Fingerprint,
   Building2,
   ChartNoAxesCombined,
@@ -209,6 +210,7 @@ export function Landing() {
           <a href="#sistema">El sistema</a>
           <a href="#recorrido">Recorrido</a>
           <Link href="/guia">Guía</Link>
+          <Link href="/presentacion">Presentación</Link>
         </nav>
         <Link href="/login" className="primary">
           Ingresar <ArrowRight size={16} />
@@ -236,6 +238,9 @@ export function Landing() {
             <a className="ghost" href="#expediente">
               Ver cómo funciona <ArrowDown size={16} />
             </a>
+            <Link className="ghost" href="/presentacion">
+              <Play size={16} /> Ver presentación
+            </Link>
           </div>
           <small className="lp-demo">Demostración con datos sintéticos. No usar información real.</small>
         </div>
