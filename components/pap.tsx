@@ -178,7 +178,7 @@ export function PapPanel({ user }: { user: User }) {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">RETO 4 · ENTREGA SEGURA</span>
+          <span className="eyebrow">ENTREGA SEGURA</span>
           <h1>Documentos que llegan con cuidado.</h1>
           <p>
             Identidad verificada, revisión humana y autorización clínica antes

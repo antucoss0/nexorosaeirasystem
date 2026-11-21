@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 const demos = [
   {
-    title: "Reto 1 · Identidad y continuidad clínica",
+    title: "Identidad y continuidad clínica",
     href: "/campo",
     role: "Brigadista → Administración",
     steps: [
@@ -14,7 +14,7 @@ const demos = [
     ],
   },
   {
-    title: "Reto 2 · Jornadas y cartas",
+    title: "Jornadas y cartas",
     href: "/admin/jornadas",
     role: "Administración → Enlace municipal",
     steps: [
@@ -26,7 +26,7 @@ const demos = [
     ],
   },
   {
-    title: "Reto 3 · Calidad e impacto",
+    title: "Calidad e impacto",
     href: "/admin/impacto",
     role: "Administración",
     steps: [
@@ -38,7 +38,7 @@ const demos = [
     ],
   },
   {
-    title: "Reto 4 · Entrega segura de documentos",
+    title: "Entrega segura de documentos",
     href: "/admin/pap",
     role: "Laboratorio → Administración → Médico → Portal",
     steps: [
@@ -65,7 +65,7 @@ export default function Guia() {
         </Link>
       </header>
       <span className="eyebrow">RECORRIDO GUIADO</span>
-      <h1>Cuatro retos, un mismo cuidado.</h1>
+      <h1>Un solo sistema, un mismo cuidado.</h1>
       <p className="guide-intro">
         Guía de demostración con información ficticia. Cambia de rol cerrando
         sesión o utiliza perfiles de navegador separados. Los circuitos
@@ -103,7 +103,7 @@ export default function Guia() {
         </div>
       </section>
       {demos.map((d, i) => (
-        <section className="panel guide-reto" key={d.href}>
+        <section className="panel guide-step" key={d.href}>
           <span className="eyebrow">
             RECORRIDO {i + 1} · {d.role}
           </span>

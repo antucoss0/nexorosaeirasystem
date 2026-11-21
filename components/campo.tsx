@@ -134,7 +134,7 @@ export function Campo() {
   return (
     <>
       <div className="page-kicker">
-        <span className="eyebrow">CAPTURA EN CAMPO · RETO 1</span>
+        <span className="eyebrow">CAPTURA EN CAMPO</span>
         <span className="phase-label">CUIDADO SIN BARRERAS</span>
       </div>
       <div className="page-heading">

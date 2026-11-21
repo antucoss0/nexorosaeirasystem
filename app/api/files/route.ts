@@ -1,3 +1,4 @@
+import { seal } from "@/lib/crypto";
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { writeFile, unlink } from "node:fs/promises";
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
       );
     const id = randomUUID();
     path = join(filesDir, id + (pdf ? ".pdf" : png ? ".png" : ".jpg"));
-    await writeFile(path, bytes, { flag: "wx" });
+    await writeFile(path, seal(bytes), { flag: "wx" });
     db.transaction(() => {
       db.prepare("INSERT INTO files VALUES (?,?,?,?,?,?,?,?)").run(
         id,

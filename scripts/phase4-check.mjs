@@ -50,11 +50,11 @@ try {
   ).toBeVisible();
   await screenshot("04-landing.png", false);
   await p.goto("/guia");
-  await expect(p.locator(".guide-reto")).toHaveCount(4);
+  await expect(p.locator(".guide-step")).toHaveCount(4);
   await expect(p.locator(".demo-credentials")).toContainText("eira2026");
   await screenshot("05-guia.png", false);
   console.log(
-    "LANDING marca y dos lemas · guía con cuatro retos, enlaces y credenciales",
+    "LANDING marca y dos lemas · guía con cuatro recorridos, enlaces y credenciales",
   );
   assert.equal(
     (

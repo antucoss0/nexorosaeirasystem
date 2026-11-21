@@ -1,3 +1,4 @@
+import { open } from "@/lib/crypto";
 import { NextResponse } from "next/server";
 import { readFile } from "node:fs/promises";
 import { currentUser } from "@/lib/auth";
@@ -15,7 +16,7 @@ export async function GET(
   try {
     const file = authorizedFile(user, id);
     audit(user, "files", "descargar", id, {});
-    return new NextResponse(await readFile(file.path), {
+    return new NextResponse(new Uint8Array(open(await readFile(file.path))), {
       headers: {
         "Content-Type": file.mime,
         "Content-Disposition": `attachment; filename="${encodeURIComponent(file.filename)}"`,

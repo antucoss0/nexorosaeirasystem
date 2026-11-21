@@ -42,13 +42,23 @@ const nav = [
   ["/admin/impacto", "Impacto", ChartNoAxesCombined, ["admin"]],
 ] as const;
 function Logout() {
-  const { online } = useConnectivity();
+  const { online, db } = useConnectivity();
   return (
     <button
       className="logout"
       disabled={!online}
       onClick={async () => {
+        const pending = (await db?.outbox.count().catch(() => 0)) || 0;
+        if (
+          pending &&
+          !confirm(
+            `Hay ${pending} operaciones sin sincronizar. Si cierras sesión se borran de este dispositivo. ¿Cerrar de todos modos?`,
+          )
+        )
+          return;
         await fetch("/api/auth/logout", { method: "POST" });
+        // A shared or lost device must not keep patient data after sign-out.
+        await db?.delete().catch(() => {});
         location.href = "/login";
       }}
     >
@@ -102,7 +112,7 @@ export function Shell({
               <br />
               <strong>Cuidamos historias.</strong>
             </p>
-            <span className="version">EIRA SYSTEM / FASE 04</span>
+            <span className="version">EIRA SYSTEM · 2026</span>
           </div>
         </aside>
         <div className="main-column">
