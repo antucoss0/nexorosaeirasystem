@@ -7,17 +7,18 @@ import { hash } from "@/lib/phase3";
 export const dynamic = "force-dynamic";
 export async function GET(
   _req: Request,
-  { params }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) {
+  const { token } = await params;
   audit(
     { id: "portal", role: "paciente" },
     "portal",
     "abrir_enlace",
-    hash(params.token),
+    hash(token),
     {},
   );
   return NextResponse.json(
-    { available: portalAvailable(params.token) },
+    { available: portalAvailable(token) },
     {
       headers: {
         "Cache-Control": "no-store",
@@ -28,8 +29,9 @@ export async function GET(
 }
 export async function POST(
   req: Request,
-  { params }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) {
+  const { token } = await params;
   try {
     if (!sameOrigin(req))
       return NextResponse.json(
@@ -37,7 +39,7 @@ export async function POST(
         { status: 403 },
       );
     const body = await req.json();
-    const result = verifyPortal(params.token, body.method, body.value);
+    const result = verifyPortal(token, body.method, body.value);
     if (!result.ok)
       return NextResponse.json(
         { error: result.error },

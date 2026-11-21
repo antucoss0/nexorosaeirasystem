@@ -9,13 +9,14 @@ import { pdfResponse, failure } from "@/lib/phase3-api";
 export const dynamic = "force-dynamic";
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await params;
   try {
-    const session = cookies().get(documentCookie(params.id))?.value;
-    const { file } = validatePortalSession(session, params.id);
+    const session = (await cookies()).get(documentCookie(id))?.value;
+    const { file } = validatePortalSession(session, id);
     const bytes = await readFile(file.path);
-    markConsulted(session!, params.id);
+    markConsulted(session!, id);
     const response = pdfResponse(bytes, "documento-eira.pdf");
     if (new URL(req.url).searchParams.get("view") === "1")
       response.headers.set(

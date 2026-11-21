@@ -13,7 +13,7 @@ export async function signSession(user: User) {
 }
 export async function currentUser(): Promise<User | null> {
   try {
-    const token = cookies().get("eira_session")?.value;
+    const token = (await cookies()).get("eira_session")?.value;
     if (!token) return null;
     const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"] });
     return (

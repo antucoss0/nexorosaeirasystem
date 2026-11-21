@@ -1,6 +1,6 @@
 # Nexo Rosa · EIRA System
 
-Plataforma local-first de cuidado y coordinación comunitaria. Interfaz en español; **solo datos sintéticos**. Fases 1–2: infraestructura, captura de campo, identidad asistida, formularios clínicos, expedientes, conflictos y bitácora. Cartas, importación e indicadores detallados pertenecen a fases posteriores.
+Plataforma local-first de cuidado y coordinación comunitaria. Interfaz en español; **solo datos sintéticos**. Fases 1–4: captura e identidad asistida, formularios clínicos, coordinación municipal y cartas, entrega segura de documentos e impacto con calidad de datos.
 
 ## Inicio local
 
@@ -11,6 +11,8 @@ npm ci
 npm run build
 npm start # http://localhost:3000
 ```
+
+También: `PORT=3100 DATA_DIR=/ruta/persistente npm start`. `DATA_DIR` contiene `nexo.db` y `files/`; si no se define se usa `./data`. El puerto se toma del entorno por Next CLI (no está fijado con `-p`). Landing pública `/` y guía `/guia` con recorridos y accesos.
 
 Desarrollo: `npm run dev`. Pruebas de la capa de sincronización: `npm test`.
 Montserrat usa `next/font/google`; la primera compilación requiere acceso a Google Fonts. SQLite y los datos de demostración se crean automáticamente al cargar el servidor (Next también puede inicializarlos durante el build). No hay servicio externo de base de datos.
@@ -29,7 +31,7 @@ Contraseña común: **eira2026**. El inicio permite email/contraseña o botones 
 
 ## Arquitectura
 
-- Next.js 14 App Router, TypeScript, Tailwind, lucide-react y Montserrat. Diseño de alto contraste, rosa mexicano, bordes de 1 px, sin sombras difusas. Campo adapta navegación y formularios a móvil.
+- Next.js 15 App Router, React 19, TypeScript, Tailwind, lucide-react y Montserrat. Diseño de alto contraste, rosa mexicano, bordes de 1 px, sin sombras difusas. Campo adapta navegación y formularios a móvil.
 - `lib/db.ts`: SQLite (`better-sqlite3`) en `data/nexo.db`, WAL y transacciones. Usuarios con bcrypt, pacientes, atenciones, jornadas, conflictos, historial por versión, operaciones aplicadas, archivos y bitácora. Los campos de dominio están en JSON; identificadores, versiones, autor y fecha son columnas; las atenciones tienen FK real a pacientes.
 - `lib/auth.ts`: JWT HS256 de 12 horas (`jose`), cookie httpOnly SameSite=Lax. Una clave aleatoria persistida en SQLite firma las sesiones si no se configura `SESSION_SECRET`. `COOKIE_SECURE=true` para HTTPS. Middleware redirige sin cookie y el layout servidor valida firma y usuario; cada API verifica sesión y permisos independientemente.
 - `lib/rbac.ts`: permisos centrales. Brigadista captura; médico autoriza PAP; laboratorio carga PDF; solo admin aprueba requisitos. Municipio recibe únicamente jornadas de su municipio y no puede cambiar municipio, cartas, estado general ni aprobaciones. No existe una API pública que edite usuarios o auditoría.
@@ -45,7 +47,7 @@ Contraseña común: **eira2026**. El inicio permite email/contraseña o botones 
 
 Seed: 3 jornadas (Zapotlán el Grande / Ciudad Guzmán, Tuxpan, Gómez Farías), 10 pacientes, 18 atenciones en cinco categorías. Dos pares de nombres deliberadamente similares; nunca se fusionan automáticamente. `public/samples/` contiene dos CSV sintéticos de 20 filas, encabezados diferentes, personas repetidas, faltantes y fechas inválidas.
 
-Rutas: `/login`, `/campo`, `/admin`, `/admin/pacientes`, `/admin/conflictos`, `/admin/bitacora`, `/admin/jornadas`, `/admin/pap`, `/admin/impacto` y `/resultado/[token]`. Impacto detallado e importación siguen pendientes para próximas fases.
+Rutas públicas: `/`, `/guia`, `/login` y `/resultado/[token]`. Módulos protegidos: `/campo`, `/admin`, `/admin/pacientes`, `/admin/conflictos`, `/admin/bitacora`, `/admin/jornadas`, `/admin/pap` y `/admin/impacto`.
 
 ## Fase 2 · Identidad y atención clínica
 
@@ -91,6 +93,29 @@ node scripts/phase3-check.mjs
 
 El script crea una jornada sintética, genera carta v1, carga/revisa/corrige/reentrega/aprueba, comprueba el semáforo y descarga la carta. También completa laboratorio → admin → médico → mensaje neutral → portal verificado → descarga → Consultado, entrega asistida y revocación. Evidencias en `~/screenshots/nexo-phase3` (cuatro PNG y dos PDF). Acepta `BASE_URL` y `EVIDENCE_DIR`. No usar con información real; faltan endurecimiento operativo, cifrado local, antivirus, rate limiting por IP y entrega de comunicaciones reales.
 
+## Fase 4 · Calidad de datos e impacto
+
+`/admin/impacto` es exclusivo de administración; no se habilitó la vista opcional de dirección para Médico. CSV UTF-8 y XLSX mediante **ExcelJS 4.4** (no se usa npm xlsx). Se lee la primera hoja, con límites de 5 MB de archivo, 20 MB descomprimidos declarados, 2000 filas y 60 columnas. El mapeo sugiere sinónimos/encabezados similares, requiere confirmación y guarda columnas/valores fijos por fuente. Hay doce campos documentados en el diccionario.
+
+Las reglas revisan requeridos, fechas reales/rangos, teléfono, CURP, categoría, cantidad y unidad; comparan nombres/identidad con expedientes, personas importadas y filas anteriores del lote. Las discrepancias y coincidencias son avisos, nunca fusiones automáticas. Cada fila exige identidad explícita (UUID existente, fila previa o nuevo ID `IMP-PER-*`) y resolución de anomalías: excluir, corregir con motivo o aceptar conservando el aviso. Las fechas inválidas aceptadas quedan identificadas y no entran en filtros de periodo. Un ajuste conserva datos originales, antes/después, responsable, fecha y motivo en la bitácora append-only.
+
+`import_batches` y `import_rows` constituyen staging trazable; filas consolidadas son inmutables. `import_people` identifica personas nuevas sin crear expedientes clínicos. Los UUID/ID confirmados se cuentan mediante DISTINCT; alias clínicos se llevan al UUID principal. Una actividad importada idéntica (persona, fecha, categoría, servicio, programa, cantidad, unidad y municipio) se cuenta una vez entre fuentes, conservando su procedencia; no se colapsan dos registros nativos legítimos. La calidad de la vinculación humana determina la calidad del conteo.
+
+Los indicadores separan personas, actividades totales y cada categoría. **Atenciones por persona = registros categoría Atención / personas únicas**; cantidad/unidad no multiplica personas ni mezcla piezas con paquetes. Sin filtros, el universo incluye expedientes activos y personas importadas incluidas; con filtros, personas con actividad en la selección. Cada tarjeta documenta corte, denominador, fuentes y fórmula; gráficos Recharts por mes, municipio y categoría. CSV y PDF institucionales incluyen filtros, indicadores y anexo de ajustes. Exportación CSV neutraliza fórmulas de hojas de cálculo.
+
+El dashboard agrega personas de todas las fuentes, pendientes municipales críticos, PAP sin leer >48 h y conflictos. Conserva los cuatro KPIs locales originales. Nuevos flujos administrativos requieren conexión; Campo/Dexie sigue siendo local-first.
+
+```sh
+npm run build
+npm audit --omit=dev
+npm test
+node scripts/phase4-check.mjs
+node scripts/phase2-check.mjs
+node scripts/phase3-check.mjs
+```
+
+Evidencia de Reto 3 en `~/screenshots/nexo-phase4`: mapeo, calidad, indicadores, landing, guía, `informe-impacto.csv` e `informe-impacto.pdf`. Los scripts aceptan `BASE_URL`; fase 4 también `EVIDENCE_DIR`. Cada ejecución crea datos sintéticos adicionales y conserva su auditoría; las actividades importadas repetidas se deduplican por su clave común.
+
 ## API: ejemplo mínimo
 
 ```sh
@@ -113,4 +138,4 @@ El volumen conserva SQLite, clave de firma y PDFs. Ejecuta como usuario no root.
 
 ## Límites de esta fase / seguridad
 
-No usar con datos reales. Faltan rotación de sesiones, recuperación de contraseña, rate limiting por IP, cifrado de dispositivo y escaneo antivirus. Las notificaciones son simuladas, no envíos reales. La versión Next 14 fue exigida por el alcance; `npm audit` reporta vulnerabilidades del framework sin parche en la serie 14 (actualizar a una versión mantenida requiere cambiar esa decisión). No exponer la demo a internet ni considerarla lista para producción.
+No usar con datos reales. Faltan rotación de sesiones, recuperación de contraseña, rate limiting por IP, cifrado de dispositivo y escaneo antivirus. Las notificaciones son simuladas, no envíos reales. En Fase 4 se actualizó a Next 15.5.29 y React 19, con APIs asíncronas de params/cookies. Overrides compatibles de PostCSS 8.5.33 y uuid 11.1.1 eliminan avisos transitivos de Next y ExcelJS, sin ocultarlos del audit. No exponer la demo a internet ni considerarla lista para producción.

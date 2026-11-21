@@ -6,17 +6,19 @@ export default async function FormPage({
   params,
   searchParams,
 }: {
-  params: { id: string; attentionId: string };
-  searchParams: { tipo?: string };
+  params: Promise<{ id: string; attentionId: string }>;
+  searchParams: Promise<{ tipo?: string }>;
 }) {
+  const { id, attentionId } = await params;
+  const { tipo } = await searchParams;
   const user = await currentUser();
   if (!user) redirect("/login");
   if (!can(user.role, "clinical_read")) redirect("/admin/jornadas");
   return (
     <ClinicalForm
-      patientId={params.id}
-      attentionId={params.attentionId}
-      kind={searchParams.tipo || "mamaria"}
+      patientId={id}
+      attentionId={attentionId}
+      kind={tipo || "mamaria"}
       user={user}
     />
   );

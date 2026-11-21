@@ -4,11 +4,12 @@ import { audit } from "@/lib/db";
 export const dynamic = "force-dynamic";
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string; version: string } },
+  { params }: { params: Promise<{ id: string; version: string }> },
 ) {
+  const { id, version } = await params;
   try {
     const user = await actor();
-    const l = verifiedLetter(user, params.id, Number(params.version));
+    const l = verifiedLetter(user, id, Number(version));
     const v = l.variables;
     const bytes = await documentPDF(`CARTA COMPROMISO · VERSIÓN ${l.version}`, [
       `Municipio: ${v.municipio}. Presidencia municipal: ${v.presidente}.`,

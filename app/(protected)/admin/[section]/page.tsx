@@ -7,12 +7,13 @@ import { Patients } from "@/components/patients";
 import { AdminConflicts, AuditViewer } from "@/components/admin-tools";
 import { Jornadas } from "@/components/jornadas";
 import { PapPanel } from "@/components/pap";
+import { Impacto } from "@/components/impacto";
 export default async function Admin({
   params,
 }: {
-  params: { section: string };
+  params: Promise<{ section: string }>;
 }) {
-  const { section } = params;
+  const { section } = await params;
   const user = await currentUser();
   if (!user) redirect("/login");
   if (
@@ -44,6 +45,7 @@ export default async function Admin({
   if (section === "bitacora") return <AuditViewer />;
   if (section === "jornadas") return <Jornadas user={user} />;
   if (section === "pap") return <PapPanel user={user} />;
+  if (section === "impacto") return <Impacto />;
   const entries =
     section === "bitacora"
       ? db.prepare("SELECT * FROM audit_logs ORDER BY id DESC LIMIT 100").all()

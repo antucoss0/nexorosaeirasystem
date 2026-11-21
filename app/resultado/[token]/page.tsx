@@ -1,5 +1,9 @@
 import { DocumentPortal } from "@/components/document-portal";
 export const metadata = { referrer: "no-referrer" };
-export default function Resultado({ params }: { params: { token: string } }) {
-  return <DocumentPortal token={params.token} />;
+export default async function Resultado({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
+  return <DocumentPortal token={(await params).token} />;
 }

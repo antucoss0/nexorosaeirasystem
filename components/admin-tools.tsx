@@ -488,12 +488,20 @@ export function Dashboard() {
   const { patients, attentions } = useRegistry();
   const { pending, online, revision } = useConnectivity();
   const [conflicts, setConflicts] = useState<number | null>(null);
+  const [moduleKPIs, setModuleKPIs] = useState<any>(null);
   useEffect(() => {
     if (online)
       fetch("/api/admin/conflicts")
         .then((r) => r.json())
         .then((d) => setConflicts(d.conflicts.length))
         .catch(() => setConflicts(null));
+  }, [online, revision]);
+  useEffect(() => {
+    if (online)
+      fetch("/api/admin/kpis")
+        .then((r) => r.json())
+        .then((d) => setModuleKPIs(d))
+        .catch(() => setModuleKPIs(null));
   }, [online, revision]);
   const stats = [
     [Users, "Pacientes únicas", patients.filter((p) => !p.merged_into).length],
@@ -531,9 +539,36 @@ export function Dashboard() {
           </div>
         ))}
       </div>
+      <section
+        className="module-kpis"
+        aria-label="Seguimiento de todos los módulos"
+      >
+        {[
+          ["Personas únicas app + importaciones", moduleKPIs?.personas],
+          ["Pendientes municipales críticos", moduleKPIs?.criticos],
+          ["PAP no leídos >48h", moduleKPIs?.pap_no_leidos],
+          ["Conflictos por resolver", moduleKPIs?.conflictos],
+        ].map(([label, value]) => (
+          <article className="panel module-kpi" key={label}>
+            <span>{label}</span>
+            <strong>{value ?? "—"}</strong>
+            <small>Servidor · todos los módulos</small>
+          </article>
+        ))}
+      </section>
       <div className="dashboard-links">
         {[
           ["/admin/pacientes", "Expedientes", "Consultar historias y estudios"],
+          [
+            "/admin/impacto",
+            "Impacto",
+            "Integrar fuentes y exportar indicadores",
+          ],
+          [
+            "/guia",
+            "Guía de demostración",
+            "Recorrer los cuatro retos y sus roles",
+          ],
           [
             "/admin/conflictos",
             "Revisión humana",
