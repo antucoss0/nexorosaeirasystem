@@ -42,12 +42,13 @@ const nav = [
   ["/admin/impacto", "Impacto", ChartNoAxesCombined, ["admin"]],
 ] as const;
 function Logout() {
-  const { online, db, pending } = useConnectivity();
+  const { online, db } = useConnectivity();
   return (
     <button
       className="logout"
       disabled={!online}
       onClick={async () => {
+        const pending = (await db?.outbox.count().catch(() => 0)) || 0;
         if (
           pending &&
           !confirm(
